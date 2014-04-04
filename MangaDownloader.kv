@@ -1,0 +1,83 @@
+#:kivy 1.0.9
+
+#<Chapter@BoxLayout>
+#    CheckBox:
+#        size_hint_x: None
+#    Label:
+#        id: chapterText
+#        text: 'test'
+#        size_hint_x: None
+#        text_size: self.size
+#        halign: 'left'
+#        valign: 'middle'
+
+<MangaDownloader>:
+    #size_hint: .5, .5
+    pos_hint: {'center_x': .5, 'center_y': .5}
+    do_default_tab: False
+
+    TabbedPanelItem:
+        text: 'Mangas'
+        BoxLayout:
+            Splitter:
+                sizable_from: 'right'
+                strip_size: 8
+                BoxLayout:
+                    orientation: 'vertical'
+                    #size_hint: 0.2, 1
+                    Button:
+                        id: getMangaList
+                        text_size: self.size
+                        halign: 'center'
+                        valign: 'middle'
+                        #size_hint: 0.2, None
+                        size_hint_y: None
+                        height: 50
+                        text: " Get Manga List"
+
+                    ListView:
+                        #size_hint: 0.2, 1
+                        id: mangaList
+                        adapter: root.list_adapter
+
+            BoxLayout:
+                orientation: 'vertical'
+                Label:
+                    id: labelManga
+                    text: "Select a Manga on the left"
+                    halign: 'left'
+                    valign: 'top'
+                    size_hint: 1, 0.2
+                    #text_size: self.size
+                BoxLayout:
+                    canvas:
+                        Color:
+                            rgba: 0.5, 0.5, 0.5, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    ListView:
+                        #size_hint: 0.2, 1
+                        id: chapterList
+                        adapter: root.chapterlist_adapter
+
+                BoxLayout:
+                    size_hint: 1, 0.2
+                    Button:
+                        text: 'Download Chapters'
+
+    TabbedPanelItem:
+        text: 'Downloads'
+        BoxLayout:
+            orientation: 'vertical'
+            Label:
+                size_hint: 1, None
+                height: 10
+            ListView:
+                id: downloadList
+                adapter: root.downloadlist_adapter
+
+    TabbedPanelItem:
+        text: 'Options'
+        RstDocument:
+            text: '\n'.join(("Hello world", "-----------", "You are in the third tab."))

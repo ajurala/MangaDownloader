@@ -1,0 +1,22 @@
+{
+	"build_systems":
+    [
+
+    		{
+	            "name": "mangaDownloader",
+	            "cmd": ["/usr/local/bin/kivy", "-u", "/Users/aj/PycharmProjects/mangaDownloader/mangaDownloader.py"],
+	    		"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)"
+    		},
+    		
+    ],
+    "settings": {
+        "python_interpreter": "/usr/local/bin/kivy",
+        "anaconda_linter_mark_style": "none",
+        "anaconda_gutter_marks": "false",
+        "pep8_ignore":
+			[
+			    "E225",
+			    "E701"
+			]
+    }
+}

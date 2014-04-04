@@ -1,0 +1,361 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+		]
+	},
+	"buffers":
+	[
+		{
+			"contents": "__author__ = 'aj'\n\nfrom kivy.app import App\nfrom kivy.uix.tabbedpanel import TabbedPanel\nfrom kivy.adapters.listadapter import ListAdapter\nfrom kivy.uix.listview import ListItemButton\nfrom kivy.lang import Builder\n\nimport string\nimport random\nimport os\n\ndata = [str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))) for i in range(1000, 1020)]\n\ncdata = [str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))) for i in range(100, 105)]\n\nargs_converter = lambda row_index, rec: {\n    'text': rec,\n    'size_hint_y': None,\n    'height': 25,\n    'shorten': 'true',\n    'valign': 'middle',\n    'halign': 'left'\n}\n\ncargs_converter = lambda row_index, rec: {\n    'text': rec\n}\n\ndargs_converter = lambda row_index, rec: {\n    'text': rec,\n    'infotext': rec,\n    'mangaProgress': 80,\n    'chapterProgress': 30\n}\n\nBuilder.load_string(\"\"\"\n# [MangaButton@ListItemButton]:\n#         text_size: self.size\n#         halign: 'center'\n#         valign: 'middle'\n#         size_hint_y: None\n#         height: self.text_size[1]\n#         text: ctx.text\n#         text_size: self.size\n#\n[MangaButton@SelectableView+GridLayout]:\n    cols: 1\n    spacing: 10\n    size_hint_y: None\n    height: thetb.texture_size[1]\n\n    ListItemButton:\n        id: thetb\n        halign: 'center'\n        valign: 'middle'\n        text: ctx.text\n        text_size: self.width, None\n        size_hint: (1, None)\n        size: self.parent.width, self.texture_size[1]\n        max_lines: 3\n\n<MangaDownloaderLabel@Label>:\n    size_hint_x: 1\n    text_size: self.size\n    halign: 'left'\n    valign: 'middle'\n    padding_x: -10\n\n[Chapter@BoxLayout]\n    size_hint: 1, None\n    height: chapterSelect.height\n\n    CheckBox:\n        id: chapterSelect\n        size_hint: None, None\n        height: 40\n        canvas:\n            Clear:\n            Color:\n                rgba: 0, 1, 0, 1\n            Rectangle:\n                source: 'atlas://data/images/defaulttheme/checkbox%s_%s' % (('_radio' if self.group else ''), ('on' if self.active else 'off'))\n                size: 32, 32\n                pos: int(self.center_x - 16), int(self.center_y - 16)\n\n    MangaDownloaderLabel:\n        id: chapterText\n        text: ctx.text\n        padding_x: 30\n\n[MangaDownload@BoxLayout]\n    orientation: 'vertical'\n    size_hint: 1, None\n    BoxLayout:\n        id: mangaDownloadInfo\n        orientation: 'vertical'\n        size_hint: 1, 1\n\n        canvas:\n            Color:\n                rgba: 0.5, 0.5, 0.5, 1\n            Rectangle:\n                pos: self.pos\n                size: self.size\n\n        MangaDownloaderLabel:\n            id: mangaName\n            text: ctx.text\n\n        MangaDownloaderLabel:\n            id: mangaDownloadInfo\n            text: ctx.infotext\n\n        ProgressBar:\n            id: mangaDownloadProgress\n            value: ctx.mangaProgress\n\n        MangaDownloaderLabel:\n            id: chapterDownloadInfo\n            text: ctx.infotext\n\n        ProgressBar:\n            id: chapterDownloadProgress\n            value: ctx.chapterProgress\n\n    Label:\n        size_hint: 1, None\n        height: 10\n\n\n\n\"\"\")\n\n\nclass MangaDownloader(TabbedPanel):\n    list_adapter = ListAdapter(data=data,\n                               args_converter=args_converter,\n                               template='MangaButton',\n                               #cls=ListItemButton,\n                               selection_mode='single',\n                               allow_empty_selection=False)\n\n    chapterlist_adapter = ListAdapter(data=cdata,\n                                      args_converter=cargs_converter,\n                                      template='Chapter',\n                                      selection_mode='none',\n                                      allow_empty_selection=True)\n\n    downloadlist_adapter = ListAdapter(data=cdata,\n                                       args_converter=dargs_converter,\n                                       template='MangaDownload',\n                                       selection_mode='none',\n                                       allow_empty_selection=True)\n\n    def __init__(self):\n        TabbedPanel.__init__(self)\n        self.list_adapter.bind(on_selection_change=self.mangaSelected)\n\n    def mangaSelected(self, list_adapter, *args):\n        if len(list_adapter.selection) == 1:\n\n            selected_object = list_adapter.selection[0]\n\n            self.ids.labelManga.text = \"Selected Manga \"+selected_object.text\n\n\nclass MangaDownloaderApp(App):\n    def build(self):\n        return MangaDownloader()\n\nif __name__ == '__main__':\n    MangaDownloaderApp().run()\n",
+			"file": "mangaDownloader.py",
+			"file_size": 4683,
+			"file_write_time": 130409351160000000,
+			"settings":
+			{
+				"buffer_size": 4683,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "mangaDownloader.sublime-project",
+			"settings":
+			{
+				"buffer_size": 502,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "MangaDownloader.kv",
+			"settings":
+			{
+				"buffer_size": 2342,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/aj/Downloads/README.MACOSX",
+			"settings":
+			{
+				"buffer_size": 3325,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "mangaDownloader",
+	"command_palette":
+	{
+		"height": 375.0,
+		"selected_items":
+		[
+			[
+				"inst",
+				"Package Control: Install Package"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"remove",
+				"Package Control: Remove Package"
+			],
+			[
+				"ins",
+				"Package Control: Install Package"
+			],
+			[
+				"instll",
+				"Package Control: Install Package"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 615.0
+	},
+	"console":
+	{
+		"height": 390.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '7183a2d3e96f11eeadd761d777e62404' + 'e330c659d4bb41d3bdf022e94cab3cd0'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by) ",
+			"sublime.log_input(True)",
+			"sublime.log_commands(True)",
+			"sublime.log_input(True)",
+			"sublime.log_commands(True)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/aj/PycharmProjects/mangaDownloader/mangaDownloader.py",
+		"/Users/aj/Library/Application Support/Sublime Text 3/Packages/User/Python.sublime-settings",
+		"/Users/aj/PycharmProjects/mangaDownloader/mangaDownloader.sublime-project",
+		"/Users/aj/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/aj/Library/Application Support/Sublime Text 3/Packages/User/Default (OSX).sublime-keymap",
+		"/Users/aj/Library/Application Support/Sublime Text 3/Packages/Default/Default (OSX).sublime-keymap",
+		"/Users/aj/Library/Application Support/Sublime Text 3/Packages/User/build-selector.py",
+		"/Applications/Sublime Text.app/Contents/MacOS/Packages/Default.sublime-package",
+		"/Users/aj/PycharmProjects/mangaDownloader/mangaDownloader.sublime-build",
+		"/Users/aj/PycharmProjects/mangaDownloader/mangaDownloader.sublime-workspace",
+		"/Users/aj/Library/Application Support/Sublime Text 3/Packages/User/kivy.sublime-build",
+		"/Users/aj/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings"
+	],
+	"find":
+	{
+		"height": 23.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"super+shift+b"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "mangaDownloader.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4683,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1688,
+								1688
+							]
+						],
+						"settings":
+						{
+							"history_list_is_closing": true,
+							"rulers":
+							[
+							],
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true,
+							"word_wrap": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 908.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "mangaDownloader.sublime-project",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 502,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								469,
+								469
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JSON.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "MangaDownloader.kv",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2342,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2267,
+								2267
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "/Users/aj/Downloads/README.MACOSX",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3325,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2769,
+								2769
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 722.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 222.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"project": "mangaDownloader.sublime-project",
+	"replace":
+	{
+		"height": 42.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"selected_items":
+		[
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 303.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
