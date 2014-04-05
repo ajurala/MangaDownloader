@@ -27,30 +27,32 @@ Builder.load_string("""
 #         max_lines: 3
 
 <MangaDownloaderLabel@Label>:
-    size_hint_x: 1
+    size_hint: 1, 1
     text_size: self.size
     halign: 'left'
     valign: 'middle'
     padding_x: -10
 
+<MangaDownloaderCheckBox@CheckBox>
+    size_hint: None, None
+    height: 40
+    canvas:
+        Clear:
+        Color:
+            rgba: 0, 1, 0, 1
+        Rectangle:
+            source: 'atlas://data/images/defaulttheme/checkbox%s_%s' % (('_radio' if self.group else ''), ('on' if self.active else 'off'))
+            size: 32, 32
+            pos: int(self.center_x - 16), int(self.center_y - 16)
+
 [Chapter@BoxLayout]
     size_hint: 1, None
     height: chapterSelect.height
 
-    CheckBox:
+    MangaDownloaderCheckBox:
         id: chapterSelect
-        size_hint: None, None
-        height: 40
         on_active: ctx['on_active'](*args)
         url: ctx.url
-        canvas:
-            Clear:
-            Color:
-                rgba: 0, 1, 0, 1
-            Rectangle:
-                source: 'atlas://data/images/defaulttheme/checkbox%s_%s' % (('_radio' if self.group else ''), ('on' if self.active else 'off'))
-                size: 32, 32
-                pos: int(self.center_x - 16), int(self.center_y - 16)
 
     MangaDownloaderLabel:
         id: chapterText
@@ -60,10 +62,12 @@ Builder.load_string("""
 [MangaDownload@BoxLayout]
     orientation: 'vertical'
     size_hint: 1, None
+
     BoxLayout:
         id: mangaDownloadInfo
         orientation: 'vertical'
         size_hint: 1, 1
+        padding: 10, 20, 10, 10
 
         canvas:
             Color:
@@ -72,12 +76,21 @@ Builder.load_string("""
                 pos: self.pos
                 size: self.size
 
-        MangaDownloaderLabel:
-            id: mangaName
-            text: ctx.text
+        BoxLayout:
+            MangaDownloaderCheckBox:
+                id: mangaDownloadSelect
+                size_hint: None, 5
+                #url: ctx.url
+
+            MangaDownloaderLabel:
+                id: mangaName
+                size_hint_y: 5
+                text: ctx.text
+                padding_x: 30
 
         MangaDownloaderLabel:
             id: mangaDownloadInfo
+            size_hint_y: 4
             text: ctx.mangaInfotext
 
         ProgressBar:
@@ -86,6 +99,7 @@ Builder.load_string("""
 
         MangaDownloaderLabel:
             id: chapterDownloadInfo
+            size_hint_y: 4
             text: ctx.chapterInfotext
 
         ProgressBar:
@@ -95,7 +109,5 @@ Builder.load_string("""
     Label:
         size_hint: 1, None
         height: 10
-
-
 
 """)

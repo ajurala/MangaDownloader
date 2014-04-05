@@ -11,6 +11,9 @@
 #        halign: 'left'
 #        valign: 'middle'
 
+<DownTabButton@Button>:
+    size_hint: 1, None
+
 <MangaDownloader>:
     mangaDownloader: mangaDownloader
     id: mangaDownloader
@@ -81,6 +84,20 @@
         text: 'Downloads'
         BoxLayout:
             orientation: 'vertical'
+            BoxLayout:
+                size_hint: 1, None
+                DownTabButton:
+                    id: pause
+                    text: 'Pause'
+                DownTabButton:
+                    id: pauseAll
+                    text: 'Pause All'
+                DownTabButton:
+                    id: cancel
+                    text: 'Cancel'
+                DownTabButton:
+                    id: cancelAll
+                    text: 'Cancel All'
             Label:
                 size_hint: 1, None
                 height: 10
