@@ -7,6 +7,7 @@ from kivy.adapters.listadapter import ListAdapter
 import string
 import random
 import mangaViewDefines
+import MangaBackGroundDownloader
 
 data = [str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))) for i in range(1000, 1020)]
 
@@ -23,11 +24,14 @@ mangaDownloaderInstance = None
 
 class MangaDownloader(TabbedPanel):
 
+    mangaBackGroundDownloader = None
+
     downloadMangaChapters = {}
 
     toDownloadUrls = []
+    toDownloadManga = ""
+
     downloadingMangas = []
-    downloadManga = ""
 
     args_converter = lambda row_index, rec: {
         'text': rec,
@@ -43,7 +47,7 @@ class MangaDownloader(TabbedPanel):
                                template='MangaButton',
                                #cls=ListItemButton,
                                selection_mode='single',
-                               allow_empty_selection=False)
+                               allow_empty_selection=True)
 
     cargs_converter = lambda row_index, rec: {
         'text': rec,
@@ -76,6 +80,8 @@ class MangaDownloader(TabbedPanel):
     def __init__(self):
         TabbedPanel.__init__(self)
         
+        self.mangaBackGroundDownloader = MangaBackGroundDownloader.MangaBackGroundDownloader()
+
         self.list_adapter.bind(on_selection_change=self.mangaSelected)
 
         self.ids.downloadChapters.bind(on_press=self.downloadChapters)
@@ -90,29 +96,37 @@ class MangaDownloader(TabbedPanel):
         #update Listview
         print "Will update listview here ..."
 
+        self.mangaBackGroundDownloader.downloadMangaList('MangaStream', self.updateMangaList)
+
+    def updateMangaList(self, mangaList):
+        print 'updated the list ... '
+        data = mangaList
+        self.list_adapter.data = data
+        self.ids.mangaList.populate()
+
     def mangaSelected(self, list_adapter, *args):
         if len(list_adapter.selection) == 1:
-
             selected_object = list_adapter.selection[0]
+            selectedManga = selected_object.text
+            if selectedManga != self.toDownloadManga:
+                self.ids.labelManga.text = "Selected Manga " + selectedManga
+                #Update the list of available chapters
 
-            self.ids.labelManga.text = "Selected Manga "+selected_object.text
-            #Update the list of available chapters
+                #Show progress screen
+                self.ids.mangasScreenManager.current = 'ChapterListProgress'
 
-            #Show progress screen
-            self.ids.mangasScreenManager.current = 'ChapterListProgress'
+                ndata = [str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))) for i in range(100, 105)]
 
-            ndata = [str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))) for i in range(100, 105)]
+                #Start a thread which gets the chapter and sets the data and shows the appropriate screen
+                #print ndata
+                self.chapterlist_adapter.data = ndata
+                self.ids.chapterList.populate()
 
-            #Start a thread which gets the chapter and sets the data and shows the appropriate screen
-            #print ndata
-            self.chapterlist_adapter.data = ndata
-            self.ids.chapterList.populate()
+                self.toDownloadManga = selected_object.text
+                self.toDownloadUrls = []
 
-            self.downloadManga = selected_object.text
-            self.downloadUrls = []            
-
-            #Show the list view screen now
-            self.ids.mangasScreenManager.current = 'ChapterList'
+                #Show the list view screen now
+                self.ids.mangasScreenManager.current = 'ChapterList'
 
     def downloadChapters(self, instance):
         pass
@@ -148,13 +162,14 @@ class MangaDownloaderApp(App):
         mangaDownloaderInstance = MangaDownloader()
         return mangaDownloaderInstance
 
+
 def on_chapterselect_checkbox_active(checkbox, value):
     mangaDownloaderInstance.on_chapterselect_checkbox_active(checkbox, value)
+
 
 def on_down_checkbox_active(checkbox, value):
     mangaDownloaderInstance.on_down_checkbox_active(checkbox, value)
 
+
 if __name__ == '__main__':
     MangaDownloaderApp().run()
-
-
