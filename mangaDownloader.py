@@ -3,7 +3,6 @@ __author__ = 'aj'
 from kivy.app import App
 from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.adapters.listadapter import ListAdapter
-from kivy.uix.listview import ListItemButton
 
 import string
 import random
@@ -18,30 +17,26 @@ ddata = [{'text':str(i)+' '.join(random.choice(string.ascii_uppercase + string.d
 'chapterInfotext': 'Chapter Info',
 'mangaProgress': 40,
 'chapterProgress': 95} for i in range(100, 105)]
-args_converter = lambda row_index, rec: {
-    'text': rec,
-    'size_hint_y': None,
-    'height': 25,
-    'shorten': 'true',
-    'valign': 'middle',
-    'halign': 'left'
-}
 
-cargs_converter = lambda row_index, rec: {
-    'text': rec
-}
-
-dargs_converter = lambda row_index, rec: {
-    'text': rec['text'],
-    'mangaInfotext': rec['mangaInfotext'],
-    'chapterInfotext': rec['chapterInfotext'],
-    'mangaProgress': rec['mangaProgress'],
-    'chapterProgress': rec['chapterProgress']
-}
-
-
+mangaDownloaderInstance = None
 
 class MangaDownloader(TabbedPanel):
+    instance = None
+
+    downloadMangaChapters = {}
+
+    downloadUrls = []
+    downloadManga = ""
+
+    args_converter = lambda row_index, rec: {
+        'text': rec,
+        'size_hint_y': None,
+        'height': 25,
+        'shorten': 'true',
+        'valign': 'middle',
+        'halign': 'left'
+    }
+
     list_adapter = ListAdapter(data=data,
                                args_converter=args_converter,
                                template='MangaButton',
@@ -49,11 +44,25 @@ class MangaDownloader(TabbedPanel):
                                selection_mode='single',
                                allow_empty_selection=False)
 
+    cargs_converter = lambda row_index, rec: {
+        'text': rec,
+        'on_active': on_checkbox_active,
+        'url': 'this is an url ... for ' + rec
+    }
+
     chapterlist_adapter = ListAdapter(data=[],
                                       args_converter=cargs_converter,
                                       template='Chapter',
                                       selection_mode='none',
                                       allow_empty_selection=True)
+
+    dargs_converter = lambda row_index, rec: {
+        'text': rec['text'],
+        'mangaInfotext': rec['mangaInfotext'],
+        'chapterInfotext': rec['chapterInfotext'],
+        'mangaProgress': rec['mangaProgress'],
+        'chapterProgress': rec['chapterProgress']
+    }
 
     downloadlist_adapter = ListAdapter(data=ddata,
                                        args_converter=dargs_converter,
@@ -63,7 +72,14 @@ class MangaDownloader(TabbedPanel):
 
     def __init__(self):
         TabbedPanel.__init__(self)
+        self.instance = self
         self.list_adapter.bind(on_selection_change=self.mangaSelected)
+        self.ids.downloadChapters.bind(on_press=self.downloadChapters)
+        self.ids.getMangaList.bind(on_press=self.downloadMangaList)
+
+    def downloadMangaList(self, instance):
+        #update Listview
+        print "Will update listview here ..."
 
     def mangaSelected(self, list_adapter, *args):
         if len(list_adapter.selection) == 1:
@@ -73,16 +89,45 @@ class MangaDownloader(TabbedPanel):
             self.ids.labelManga.text = "Selected Manga "+selected_object.text
             #Update the list of available chapters
 
+            #Show progress screen
+            self.ids.mangasScreenManager.current = 'ChapterListProgress'
+
             ndata = [str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))) for i in range(100, 105)]
 
+            #Start a thread which gets the chapter and sets the data and shows the appropriate screen
             #print ndata
             self.chapterlist_adapter.data = ndata
             self.ids.chapterList.populate()
 
+            self.downloadManga = selected_object.text
+            self.downloadUrls = []            
+
+            #Show the list view screen now
+            self.ids.mangasScreenManager.current = 'ChapterList'
+
+    def downloadChapters(self, instance):
+        pass
+
+    def on_checkbox_active(self, checkbox, value):
+        if value:
+            #print('The checkbox', checkbox, 'is active')
+            #print('My url: ', checkbox.url)
+            self.downloadUrls.append(checkbox.url)
+        else:
+            #print('The checkbox', checkbox, 'is inactive')
+            self.downloadUrls.remove(checkbox.url)
 
 class MangaDownloaderApp(App):
     def build(self):
-        return MangaDownloader()
+        global mangaDownloaderInstance
+
+        mangaDownloaderInstance = MangaDownloader()
+        return mangaDownloaderInstance
+
+def on_checkbox_active(checkbox, value):
+    mangaDownloaderInstance.on_checkbox_active(checkbox, value)
 
 if __name__ == '__main__':
     MangaDownloaderApp().run()
+
+

@@ -12,6 +12,8 @@
 #        valign: 'middle'
 
 <MangaDownloader>:
+    mangaDownloader: mangaDownloader
+    id: mangaDownloader
     #size_hint: .5, .5
     pos_hint: {'center_x': .5, 'center_y': .5}
     do_default_tab: False
@@ -49,22 +51,31 @@
                     valign: 'top'
                     size_hint: 1, 0.2
                     #text_size: self.size
-                BoxLayout:
-                    canvas:
-                        Color:
-                            rgba: 0.5, 0.5, 0.5, 1
-                        Rectangle:
-                            pos: self.pos
-                            size: self.size
-                    ListView:
-                        #size_hint: 0.2, 1
-                        id: chapterList
-                        adapter: root.chapterlist_adapter
+                ScreenManager:
+                    id: mangasScreenManager
+                    Screen:
+                        name: 'ChapterListProgress'
+                        Label:
+                            text: 'Getting Chapter List'
+                    Screen:
+                        name: 'ChapterList'
+                        BoxLayout:
+                            canvas:
+                                Color:
+                                    rgba: 0.5, 0.5, 0.5, 1
+                                Rectangle:
+                                    pos: self.pos
+                                    size: self.size
+                            ListView:
+                                #size_hint: 0.2, 1
+                                id: chapterList
+                                adapter: root.chapterlist_adapter
 
-                BoxLayout:
-                    size_hint: 1, 0.2
-                    Button:
-                        text: 'Download Chapters'
+                        BoxLayout:
+                            size_hint: 1, 0.2
+                            Button:
+                                id: downloadChapters
+                                text: 'Download Chapters'
 
     TabbedPanelItem:
         text: 'Downloads'

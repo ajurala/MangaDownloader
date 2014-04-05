@@ -4,7 +4,7 @@
 
     		{
 	            "name": "mangaDownloader",
-	            "cmd": ["/usr/local/bin/kivy", "-u", "/Users/aj/PycharmProjects/mangaDownloader/mangaDownloader.py"],
+	            "cmd": ["/usr/local/bin/kivy", "-u", "./mangaDownloader.py"],
 	    		"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)"
     		},
     		

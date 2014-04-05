@@ -41,6 +41,8 @@ Builder.load_string("""
         id: chapterSelect
         size_hint: None, None
         height: 40
+        on_active: ctx['on_active'](*args)
+        url: ctx.url
         canvas:
             Clear:
             Color:
