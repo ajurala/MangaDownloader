@@ -20,12 +20,13 @@ ddata = [{'text':str(i)+' '.join(random.choice(string.ascii_uppercase + string.d
 
 mangaDownloaderInstance = None
 
+
 class MangaDownloader(TabbedPanel):
-    instance = None
 
     downloadMangaChapters = {}
 
-    downloadUrls = []
+    toDownloadUrls = []
+    downloadingMangas = []
     downloadManga = ""
 
     args_converter = lambda row_index, rec: {
@@ -46,7 +47,7 @@ class MangaDownloader(TabbedPanel):
 
     cargs_converter = lambda row_index, rec: {
         'text': rec,
-        'on_active': on_checkbox_active,
+        'on_active': on_chapterselect_checkbox_active,
         'url': 'this is an url ... for ' + rec
     }
 
@@ -61,7 +62,9 @@ class MangaDownloader(TabbedPanel):
         'mangaInfotext': rec['mangaInfotext'],
         'chapterInfotext': rec['chapterInfotext'],
         'mangaProgress': rec['mangaProgress'],
-        'chapterProgress': rec['chapterProgress']
+        'chapterProgress': rec['chapterProgress'],
+        'on_active': on_down_checkbox_active,
+        'mangaName': 'this is an url ... for ... ' + rec['text']
     }
 
     downloadlist_adapter = ListAdapter(data=ddata,
@@ -72,10 +75,16 @@ class MangaDownloader(TabbedPanel):
 
     def __init__(self):
         TabbedPanel.__init__(self)
-        self.instance = self
+        
         self.list_adapter.bind(on_selection_change=self.mangaSelected)
+
         self.ids.downloadChapters.bind(on_press=self.downloadChapters)
         self.ids.getMangaList.bind(on_press=self.downloadMangaList)
+
+        self.ids.pause.bind(on_press=self.pauseCancelDownloads)
+        self.ids.pauseAll.bind(on_press=self.pauseCancelDownloads)
+        self.ids.cancel.bind(on_press=self.pauseCancelDownloads)
+        self.ids.cancelAll.bind(on_press=self.pauseCancelDownloads)
 
     def downloadMangaList(self, instance):
         #update Listview
@@ -108,14 +117,29 @@ class MangaDownloader(TabbedPanel):
     def downloadChapters(self, instance):
         pass
 
-    def on_checkbox_active(self, checkbox, value):
+    def on_chapterselect_checkbox_active(self, checkbox, value):
         if value:
-            #print('The checkbox', checkbox, 'is active')
-            #print('My url: ', checkbox.url)
-            self.downloadUrls.append(checkbox.url)
+            self.toDownloadUrls.append(checkbox.url)
         else:
-            #print('The checkbox', checkbox, 'is inactive')
-            self.downloadUrls.remove(checkbox.url)
+            self.toDownloadUrls.remove(checkbox.url)
+
+    def on_down_checkbox_active(self, checkbox, value):
+        if value:
+            self.downloadingMangas.append(checkbox.mangaName)
+        else:
+            self.downloadingMangas.remove(checkbox.mangaName)
+        print self.downloadingMangas
+
+    def pauseCancelDownloads(self, instance):
+        if instance == self.ids.pause:
+            print "pause called"
+        elif instance == self.ids.pauseAll:
+            print "pause all called"
+        if instance == self.ids.cancel:
+            print "cancel called"
+        elif instance == self.ids.cancelAll:
+            print "cancel all called"
+
 
 class MangaDownloaderApp(App):
     def build(self):
@@ -124,8 +148,11 @@ class MangaDownloaderApp(App):
         mangaDownloaderInstance = MangaDownloader()
         return mangaDownloaderInstance
 
-def on_checkbox_active(checkbox, value):
-    mangaDownloaderInstance.on_checkbox_active(checkbox, value)
+def on_chapterselect_checkbox_active(checkbox, value):
+    mangaDownloaderInstance.on_chapterselect_checkbox_active(checkbox, value)
+
+def on_down_checkbox_active(checkbox, value):
+    mangaDownloaderInstance.on_down_checkbox_active(checkbox, value)
 
 if __name__ == '__main__':
     MangaDownloaderApp().run()

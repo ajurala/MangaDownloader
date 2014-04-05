@@ -80,7 +80,8 @@ Builder.load_string("""
             MangaDownloaderCheckBox:
                 id: mangaDownloadSelect
                 size_hint: None, 5
-                #url: ctx.url
+                on_active: ctx['on_active'](*args)
+                mangaName: ctx.mangaName
 
             MangaDownloaderLabel:
                 id: mangaName
