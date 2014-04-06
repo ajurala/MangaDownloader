@@ -1,47 +1,52 @@
-from kivy.network.urlrequest import UrlRequest
-#import lxml
+from MangaStreamDownloader import MangaStreamDownloader
 
 
 class MangaBackGroundDownloader():
 
-    mangaSiteURL = {'MangaStream': 'http://mangastream.com/manga'}
-    mangaSiteRequest = {}
+    mangaSites = {'MangaStream': MangaStreamDownloader()}
     mangaSiteRequestInfo = {}
+    chapterRequestInfo = {}
 
     def __init__(self):
         pass
 
     def downloadMangaList(self, mangaSite, func):
         #Request already pending then ignore
-        if self.mangaSiteRequest.get(mangaSite, None) is None:
-            print "Yeah started ..."
-            url = self.mangaSiteURL.get(mangaSite, None)
-            if url is not None:
-                req = UrlRequest(url, self.downloadMangaSuccess)
-                #print req
+        mangaObj = self.mangaSites.get(mangaSite, None)
 
-                self.mangaSiteRequest[mangaSite] = 'Y'
+        if mangaObj is not None and not mangaObj.isRequestPending():
 
-                requestInfo = {}
-                requestInfo['mangaSite'] = mangaSite
-                requestInfo['func'] = func
+            mangaObj.downloadMangaList(self.mangaListCallBack)
 
-                self.mangaSiteRequestInfo[req] = requestInfo
+            self.mangaSiteRequestInfo[mangaSite] = func
 
-                #if self.mangaSiteRequestInfo.get(req, None) is None:
-                #    print "woah why none"
+    def getMangaList(self, mangaSite, func):
+        mangaObj = self.mangaSites.get(mangaSite, None)
+        func(mangaSite, mangaObj.getMangaList())
 
-    def downloadMangaSuccess(self, req, result):
-        #print req
-        requestInfo = self.mangaSiteRequestInfo.get(req, None)
-        
-        #parse.
-        print requestInfo
+    def mangaListCallBack(self, mangaSite, mangaList):
+        callbackFunc = self.mangaSiteRequestInfo.get(mangaSite, None)
 
-        if requestInfo is not None:
-            func = requestInfo['func']
+        if callbackFunc is not None:
+            self.mangaSiteRequestInfo.pop(mangaSite)
+            callbackFunc(mangaSite, mangaList)
 
-            self.mangaSiteRequest.pop(requestInfo['mangaSite'])
-            self.mangaSiteRequestInfo.pop(req)
+    def downloadChapterList(self, mangaSite, url, func):
+        mangaObj = self.mangaSites.get(mangaSite, None)
 
-            func(['Aj', 'Ur'])
+        if mangaObj is not None:
+
+            # This call below might be needed in future - Keep it
+            #mangaObj.stopPendingChapterRequests()
+
+            mangaObj.downloadChapterList(url, self.chapterListCallBack)
+
+            self.chapterRequestInfo[mangaSite] = func
+
+    def chapterListCallBack(self, mangaSite, mangaList):
+        callbackFunc = self.chapterRequestInfo.get(mangaSite, None)
+
+        if callbackFunc is not None:
+            print "Chapter list got it "
+            self.chapterRequestInfo.pop(mangaSite)
+            callbackFunc(mangaSite, mangaList)

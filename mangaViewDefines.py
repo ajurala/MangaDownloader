@@ -9,6 +9,8 @@ Builder.load_string("""
     height: 30
     text: ctx.text
     text_size: self.size
+    url: ctx.url
+
 #
 # [MangaButton@SelectableView+GridLayout]:
 #     cols: 1
@@ -25,6 +27,7 @@ Builder.load_string("""
 #         size_hint: (1, None)
 #         size: self.parent.width, self.texture_size[1]
 #         max_lines: 3
+
 
 <MangaDownloaderLabel@Label>:
     size_hint: 1, 1

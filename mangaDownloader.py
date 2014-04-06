@@ -9,9 +9,9 @@ import random
 import mangaViewDefines
 import MangaBackGroundDownloader
 
-data = [str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))) for i in range(1000, 1020)]
+#data = [str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))) for i in range(1000, 1020)]
 
-cdata = [str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))) for i in range(100, 105)]
+#cdata = [str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))) for i in range(100, 105)]
 
 ddata = [{'text':str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))),
 'mangaInfotext': 'Manga Info',
@@ -34,15 +34,16 @@ class MangaDownloader(TabbedPanel):
     downloadingMangas = []
 
     args_converter = lambda row_index, rec: {
-        'text': rec,
+        'text': rec['name'],
         'size_hint_y': None,
         'height': 25,
         'shorten': 'true',
         'valign': 'middle',
-        'halign': 'left'
+        'halign': 'left',
+        'url': rec['url']
     }
 
-    list_adapter = ListAdapter(data=data,
+    list_adapter = ListAdapter(data=[],
                                args_converter=args_converter,
                                template='MangaButton',
                                #cls=ListItemButton,
@@ -50,9 +51,9 @@ class MangaDownloader(TabbedPanel):
                                allow_empty_selection=True)
 
     cargs_converter = lambda row_index, rec: {
-        'text': rec,
+        'text': rec['name'],
         'on_active': on_chapterselect_checkbox_active,
-        'url': 'this is an url ... for ' + rec
+        'url': rec['url']
     }
 
     chapterlist_adapter = ListAdapter(data=[],
@@ -92,13 +93,15 @@ class MangaDownloader(TabbedPanel):
         self.ids.cancel.bind(on_press=self.pauseCancelDownloads)
         self.ids.cancelAll.bind(on_press=self.pauseCancelDownloads)
 
+        self.mangaBackGroundDownloader.getMangaList('MangaStream', self.updateMangaList)
+
     def downloadMangaList(self, instance):
         #update Listview
-        print "Will update listview here ..."
+        print "Will update listview now ..."
 
         self.mangaBackGroundDownloader.downloadMangaList('MangaStream', self.updateMangaList)
 
-    def updateMangaList(self, mangaList):
+    def updateMangaList(self, mangaSite, mangaList):
         print 'updated the list ... '
         data = mangaList
         self.list_adapter.data = data
@@ -115,18 +118,18 @@ class MangaDownloader(TabbedPanel):
                 #Show progress screen
                 self.ids.mangasScreenManager.current = 'ChapterListProgress'
 
-                ndata = [str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))) for i in range(100, 105)]
-
-                #Start a thread which gets the chapter and sets the data and shows the appropriate screen
-                #print ndata
-                self.chapterlist_adapter.data = ndata
-                self.ids.chapterList.populate()
-
                 self.toDownloadManga = selected_object.text
                 self.toDownloadUrls = []
 
-                #Show the list view screen now
-                self.ids.mangasScreenManager.current = 'ChapterList'
+                self.mangaBackGroundDownloader.downloadChapterList('MangaStream', selected_object.url, self.updateChapterList)
+
+    def updateChapterList(self, mangaSite, chapterList):
+        print 'updated the chapter list ... '
+        data = chapterList
+        self.chapterlist_adapter.data = data
+        self.ids.chapterList.populate()
+        #Show the list view screen now
+        self.ids.mangasScreenManager.current = 'ChapterList'
 
     def downloadChapters(self, instance):
         pass

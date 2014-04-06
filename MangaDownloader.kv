@@ -24,65 +24,78 @@
     TabbedPanelItem:
         text: 'Mangas'
         BoxLayout:
-            Splitter:
-                sizable_from: 'right'
-                strip_size: 8
+            orientation: 'vertical'
+            BoxLayout:
+                Splitter:
+                    sizable_from: 'right'
+                    strip_size: 8
+                    size_hint_x: 0.5
+
+                    BoxLayout:
+                        orientation: 'vertical'
+                        #size_hint: 0.2, 1
+                        Button:
+                            id: getMangaList
+                            text_size: self.size
+                            halign: 'center'
+                            valign: 'middle'
+                            #size_hint: 0.2, None
+                            size_hint_y: None
+                            height: 50
+                            text: " Get Manga List"
+
+                        ListView:
+                            #size_hint: 0.2, 1
+                            id: mangaList
+                            adapter: root.list_adapter
+
                 BoxLayout:
                     orientation: 'vertical'
-                    #size_hint: 0.2, 1
-                    Button:
-                        id: getMangaList
-                        text_size: self.size
-                        halign: 'center'
-                        valign: 'middle'
-                        #size_hint: 0.2, None
-                        size_hint_y: None
-                        height: 50
-                        text: " Get Manga List"
+                    Label:
+                        id: labelManga
+                        text: "Select a Manga on the left"
+                        halign: 'left'
+                        valign: 'top'
+                        size_hint: 1, 0.2
+                        #text_size: self.size
+                    ScreenManager:
+                        id: mangasScreenManager
+                        Screen:
+                            name: 'InitialScreen'
+                            Label:
+                                text: 'Select a Manga from the list to get a list of available chapters'
+                        Screen:
+                            name: 'ChapterListProgress'
+                            Label:
+                                text: 'Getting Chapter List'
+                        Screen:
+                            name: 'ChapterList'
+                            BoxLayout:
+                                canvas:
+                                    Color:
+                                        rgba: 0.5, 0.5, 0.5, 1
+                                    Rectangle:
+                                        pos: self.pos
+                                        size: self.size
+                                ListView:
+                                    #size_hint: 0.2, 1
+                                    id: chapterList
+                                    adapter: root.chapterlist_adapter
 
-                    ListView:
-                        #size_hint: 0.2, 1
-                        id: mangaList
-                        adapter: root.list_adapter
-
-            BoxLayout:
-                orientation: 'vertical'
-                Label:
-                    id: labelManga
-                    text: "Select a Manga on the left"
-                    halign: 'left'
-                    valign: 'top'
-                    size_hint: 1, 0.2
-                    #text_size: self.size
-                ScreenManager:
-                    id: mangasScreenManager
-                    Screen:
-                        name: 'InitialScreen'
-                        Label:
-                            text: 'Select a Manga from the list to get a list of available chapters'
-                    Screen:
-                        name: 'ChapterListProgress'
-                        Label:
-                            text: 'Getting Chapter List'
-                    Screen:
-                        name: 'ChapterList'
-                        BoxLayout:
-                            canvas:
-                                Color:
-                                    rgba: 0.5, 0.5, 0.5, 1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                            ListView:
-                                #size_hint: 0.2, 1
-                                id: chapterList
-                                adapter: root.chapterlist_adapter
-
-                        BoxLayout:
-                            size_hint: 1, 0.2
-                            Button:
-                                id: downloadChapters
-                                text: 'Download Chapters'
+                            BoxLayout:
+                                size_hint: 1, 0.2
+                                Button:
+                                    id: downloadChapters
+                                    text: 'Download Chapters'
+            Label:
+                id: status
+                size_hint_y: None
+                height: 25
+                text: 'Status:'
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+                padding_x: -10
 
     TabbedPanelItem:
         text: 'Downloads'
