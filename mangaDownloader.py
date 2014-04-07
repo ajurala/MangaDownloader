@@ -32,7 +32,7 @@ class MangaDownloader(TabbedPanel):
     toDownloadManga = ""
 
     downloadingMangasIds = {}
-
+    downloadingMangasSelected = []
     ddata = []
 
     currentMangaSite = "MangaStream"
@@ -73,7 +73,8 @@ class MangaDownloader(TabbedPanel):
         'mangaProgress': rec['mangaProgress'],
         'chapterProgress': rec['chapterProgress'],
         'on_active': on_down_checkbox_active,
-        'mangaName': 'this is an url ... for ... ' + rec['text']
+        'mangaName': rec['text'],
+        'downloadSessionId': rec['downloadSessionId']
     }
 
     downloadlist_adapter = ListAdapter(data=[],
@@ -136,15 +137,15 @@ class MangaDownloader(TabbedPanel):
         self.ids.mangasScreenManager.current = 'ChapterList'
 
     def downloadChapters(self, instance):
-        downloadSessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20))
+        downloadSessionId = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20))
 
-        while self.downloadingMangasIds.get(downloadSessionID, None) is not None:
-            downloadSessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20))
+        while self.downloadingMangasIds.get(downloadSessionId, None) is not None:
+            downloadSessionId = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20))
 
         self.toDownloadUrls = self.mangaBackGroundDownloader.loadDownloadChapters(self.currentMangaSite,
                                                                               self.toDownloadManga,
                                                                               self.toDownloadUrls,
-                                                                              downloadSessionID,
+                                                                              downloadSessionId,
                                                                               self.downloadingProgress)
 
         if len(self.toDownloadUrls) > 0:
@@ -159,19 +160,19 @@ class MangaDownloader(TabbedPanel):
           downloadSession['mangaName'] = self.toDownloadManga
           downloadSession['numberOfChapters'] = len(self.toDownloadUrls)
 
-          downloadSession['downloadSessionID'] = downloadSessionID
+          downloadSession['downloadSessionId'] = downloadSessionId
 
           #self.ddata.append(downloadSession)
-          #self.downloadingMangasIds[downloadSessionID] = len(self.ddata) - 1
+          #self.downloadingMangasIds[downloadSessionId] = len(self.ddata) - 1
 
           self.downloadlist_adapter.data.append(downloadSession)
-          self.downloadingMangasIds[downloadSessionID] = len(self.downloadlist_adapter.data) - 1
+          self.downloadingMangasIds[downloadSessionId] = len(self.downloadlist_adapter.data) - 1
 
           self.ids.downloadList.populate()
 
-          self.mangaBackGroundDownloader.startResumeDownloadChapters(downloadSessionID)
+          self.mangaBackGroundDownloader.startResumeDownloadChapters(downloadSessionId)
 
-    def downloadingProgress(self, downloadSessionID, chapterProgress):
+    def downloadingProgress(self, downloadSessionId, chapterProgress):
         pass
 
     def on_chapterselect_checkbox_active(self, checkbox, value):
@@ -182,19 +183,23 @@ class MangaDownloader(TabbedPanel):
 
     def on_down_checkbox_active(self, checkbox, value):
         if value:
-            self.downloadingMangas.append(checkbox.mangaName)
+            self.downloadingMangasSelected.append(checkbox.downloadSessionId)
         else:
-            self.downloadingMangas.remove(checkbox.mangaName)
-        print self.downloadingMangas
+            self.downloadingMangasSelected.remove(checkbox.downloadSessionId)
+        print self.downloadingMangasSelected
 
     def pauseCancelDownloads(self, instance):
         if instance == self.ids.pause:
             print "pause called"
         elif instance == self.ids.pauseAll:
             print "pause all called"
-        if instance == self.ids.cancel:
+        elif instance == self.ids.remove:
             print "cancel called"
-        elif instance == self.ids.cancelAll:
+        elif instance == self.ids.removeAll:
+            print "cancel all called"
+        elif instance == self.ids.resume:
+            print "cancel called"
+        elif instance == self.ids.resumeAl:
             print "cancel all called"
 
 

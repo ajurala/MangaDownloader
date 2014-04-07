@@ -14,6 +14,9 @@
 <DownTabButton@Button>:
     size_hint: 1, None
 
+<Separator@Label>:
+    size_hint: 0.2, None
+
 <MangaDownloader>:
     mangaDownloader: mangaDownloader
     id: mangaDownloader
@@ -107,14 +110,21 @@
                     id: pause
                     text: 'Pause'
                 DownTabButton:
+                    id: resume
+                    text: 'Resume'
+                DownTabButton:
+                    id: remove
+                    text: 'Remove'
+                Separator:
+                DownTabButton:
                     id: pauseAll
                     text: 'Pause All'
                 DownTabButton:
-                    id: cancel
-                    text: 'Cancel'
+                    id: resumeAll
+                    text: 'Resume All'
                 DownTabButton:
-                    id: cancelAll
-                    text: 'Cancel All'
+                    id: removeAll
+                    text: 'Remove All'
             Label:
                 size_hint: 1, None
                 height: 10

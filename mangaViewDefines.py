@@ -85,6 +85,7 @@ Builder.load_string("""
                 size_hint: None, 5
                 on_active: ctx['on_active'](*args)
                 mangaName: ctx.mangaName
+                downloadSessionId: ctx.downloadSessionId
 
             MangaDownloaderLabel:
                 id: mangaName

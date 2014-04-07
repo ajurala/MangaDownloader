@@ -52,7 +52,7 @@ class MangaBackGroundDownloader():
             self.chapterRequestInfo.pop(mangaSite)
             callbackFunc(mangaSite, mangaList)
 
-    def loadDownloadChapters(self, mangaSite, manga, urls, downloadSessionID, func):
+    def loadDownloadChapters(self, mangaSite, manga, urls, downloadSessionId, func):
         mangaObj = self.mangaSites.get(mangaSite, None)
 
         if mangaObj is not None:
@@ -60,15 +60,15 @@ class MangaBackGroundDownloader():
             downloadRequest = {}
             downloadRequest['mangaObj'] = mangaObj
             downloadRequest['func'] = func
-            self.downloadRequestInfo[downloadSessionID] = downloadRequest
+            self.downloadRequestInfo[downloadSessionId] = downloadRequest
 
             #The manga site will return the urls
             return urls
 
         return []
 
-    def startResumeDownloadChapters(self, downloadSessionID):
-        downloadRequest = self.downloadRequestInfo.get(downloadSessionID, None)
+    def startResumeDownloadChapters(self, downloadSessionId):
+        downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
 
         if downloadRequest is not None:
             mangaObj = downloadRequest['mangaObj']
