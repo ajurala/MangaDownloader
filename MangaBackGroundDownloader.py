@@ -6,6 +6,7 @@ class MangaBackGroundDownloader():
     mangaSites = {'MangaStream': MangaStreamDownloader()}
     mangaSiteRequestInfo = {}
     chapterRequestInfo = {}
+    downloadRequestInfo = {}
 
     def __init__(self):
         pass
@@ -50,3 +51,25 @@ class MangaBackGroundDownloader():
             print "Chapter list got it "
             self.chapterRequestInfo.pop(mangaSite)
             callbackFunc(mangaSite, mangaList)
+
+    def loadDownloadChapters(self, mangaSite, manga, urls, downloadSessionID, func):
+        mangaObj = self.mangaSites.get(mangaSite, None)
+
+        if mangaObj is not None:
+            #Call download for these urls
+            downloadRequest = {}
+            downloadRequest['mangaObj'] = mangaObj
+            downloadRequest['func'] = func
+            self.downloadRequestInfo[downloadSessionID] = downloadRequest
+
+            #The manga site will return the urls
+            return urls
+
+        return []
+
+    def startResumeDownloadChapters(self, downloadSessionID):
+        downloadRequest = self.downloadRequestInfo.get(downloadSessionID, None)
+
+        if downloadRequest is not None:
+            mangaObj = downloadRequest['mangaObj']
+            #Start resume to the download now

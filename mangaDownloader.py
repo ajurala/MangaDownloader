@@ -13,11 +13,11 @@ import MangaBackGroundDownloader
 
 #cdata = [str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))) for i in range(100, 105)]
 
-ddata = [{'text':str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))),
-'mangaInfotext': 'Manga Info',
-'chapterInfotext': 'Chapter Info',
-'mangaProgress': 40,
-'chapterProgress': 95} for i in range(100, 105)]
+#ddata = [{'text':str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))),
+#'mangaInfotext': 'Manga Info',
+#'chapterInfotext': 'Chapter Info',
+#'mangaProgress': 40,
+#'chapterProgress': 95} for i in range(100, 105)]
 
 mangaDownloaderInstance = None
 
@@ -31,7 +31,11 @@ class MangaDownloader(TabbedPanel):
     toDownloadUrls = []
     toDownloadManga = ""
 
-    downloadingMangas = []
+    downloadingMangasIds = {}
+
+    ddata = []
+
+    currentMangaSite = "MangaStream"
 
     args_converter = lambda row_index, rec: {
         'text': rec['name'],
@@ -72,7 +76,7 @@ class MangaDownloader(TabbedPanel):
         'mangaName': 'this is an url ... for ... ' + rec['text']
     }
 
-    downloadlist_adapter = ListAdapter(data=ddata,
+    downloadlist_adapter = ListAdapter(data=[],
                                        args_converter=dargs_converter,
                                        template='MangaDownload',
                                        selection_mode='none',
@@ -93,13 +97,13 @@ class MangaDownloader(TabbedPanel):
         self.ids.cancel.bind(on_press=self.pauseCancelDownloads)
         self.ids.cancelAll.bind(on_press=self.pauseCancelDownloads)
 
-        self.mangaBackGroundDownloader.getMangaList('MangaStream', self.updateMangaList)
+        self.mangaBackGroundDownloader.getMangaList(self.currentMangaSite, self.updateMangaList)
 
     def downloadMangaList(self, instance):
         #update Listview
         print "Will update listview now ..."
 
-        self.mangaBackGroundDownloader.downloadMangaList('MangaStream', self.updateMangaList)
+        self.mangaBackGroundDownloader.downloadMangaList(self.currentMangaSite, self.updateMangaList)
 
     def updateMangaList(self, mangaSite, mangaList):
         print 'updated the list ... '
@@ -121,7 +125,7 @@ class MangaDownloader(TabbedPanel):
                 self.toDownloadManga = selected_object.text
                 self.toDownloadUrls = []
 
-                self.mangaBackGroundDownloader.downloadChapterList('MangaStream', selected_object.url, self.updateChapterList)
+                self.mangaBackGroundDownloader.downloadChapterList(self.currentMangaSite, selected_object.url, self.updateChapterList)
 
     def updateChapterList(self, mangaSite, chapterList):
         print 'updated the chapter list ... '
@@ -132,6 +136,42 @@ class MangaDownloader(TabbedPanel):
         self.ids.mangasScreenManager.current = 'ChapterList'
 
     def downloadChapters(self, instance):
+        downloadSessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20))
+
+        while self.downloadingMangasIds.get(downloadSessionID, None) is not None:
+            downloadSessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20))
+
+        self.toDownloadUrls = self.mangaBackGroundDownloader.loadDownloadChapters(self.currentMangaSite,
+                                                                              self.toDownloadManga,
+                                                                              self.toDownloadUrls,
+                                                                              downloadSessionID,
+                                                                              self.downloadingProgress)
+
+        if len(self.toDownloadUrls) > 0:
+          #Update downloading data with this instance. Pass the unique id for it
+          downloadSession = {}
+
+          downloadSession['text'] = self.currentMangaSite
+          downloadSession['mangaInfotext'] = self.toDownloadManga + " 1/" + str(len(self.toDownloadUrls))
+          downloadSession['chapterInfotext'] = ""
+          downloadSession['mangaProgress'] = 0
+          downloadSession['chapterProgress'] = 0
+          downloadSession['mangaName'] = self.toDownloadManga
+          downloadSession['numberOfChapters'] = len(self.toDownloadUrls)
+
+          downloadSession['downloadSessionID'] = downloadSessionID
+
+          #self.ddata.append(downloadSession)
+          #self.downloadingMangasIds[downloadSessionID] = len(self.ddata) - 1
+
+          self.downloadlist_adapter.data.append(downloadSession)
+          self.downloadingMangasIds[downloadSessionID] = len(self.downloadlist_adapter.data) - 1
+
+          self.ids.downloadList.populate()
+
+          self.mangaBackGroundDownloader.startResumeDownloadChapters(downloadSessionID)
+
+    def downloadingProgress(self, downloadSessionID, chapterProgress):
         pass
 
     def on_chapterselect_checkbox_active(self, checkbox, value):

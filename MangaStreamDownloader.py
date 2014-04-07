@@ -6,6 +6,7 @@ from StringIO import StringIO
 
 import pickle
 
+
 class MangaStreamDownloader():
     requestPending = False
     mangaSiteName = 'MangaStream'
