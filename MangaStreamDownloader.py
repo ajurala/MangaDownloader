@@ -1,4 +1,4 @@
-from kivy.network.urlrequest import UrlRequest
+import pyCurl
 from lxml import etree
 from threading import Lock
 
