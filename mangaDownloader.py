@@ -1,5 +1,8 @@
 __author__ = 'aj'
 
+from kivy.config import Config
+Config.set('kivy', 'exit_on_escape', 0)
+
 from kivy.app import App
 from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.adapters.listadapter import ListAdapter
@@ -93,21 +96,20 @@ class MangaDownloader(TabbedPanel):
         self.ids.downloadChapters.bind(on_press=self.downloadChapters)
         self.ids.getMangaList.bind(on_press=self.downloadMangaList)
 
-        self.ids.pause.bind(on_press=self.pauseCancelDownloads)
-        self.ids.pauseAll.bind(on_press=self.pauseCancelDownloads)
-        self.ids.cancel.bind(on_press=self.pauseCancelDownloads)
-        self.ids.cancelAll.bind(on_press=self.pauseCancelDownloads)
+        self.ids.pauseDownloadSession.bind(on_press=self.pauseCancelDownloads)
+        self.ids.pauseAllDownloadSession.bind(on_press=self.pauseCancelDownloads)
+        self.ids.removeDownloadSession.bind(on_press=self.pauseCancelDownloads)
+        self.ids.removeAllDownloadSession.bind(on_press=self.pauseCancelDownloads)
+        self.ids.resumeDownloadSession.bind(on_press=self.pauseCancelDownloads)
+        self.ids.resumeAllDownloadSession.bind(on_press=self.pauseCancelDownloads)
 
         self.mangaBackGroundDownloader.getMangaList(self.currentMangaSite, self.updateMangaList)
 
     def downloadMangaList(self, instance):
         #update Listview
-        print "Will update listview now ..."
-
         self.mangaBackGroundDownloader.downloadMangaList(self.currentMangaSite, self.updateMangaList)
 
     def updateMangaList(self, mangaSite, mangaList):
-        print 'updated the list ... '
         data = mangaList
         self.list_adapter.data = data
         self.ids.mangaList.populate()
@@ -129,7 +131,6 @@ class MangaDownloader(TabbedPanel):
                 self.mangaBackGroundDownloader.downloadChapterList(self.currentMangaSite, selected_object.url, self.updateChapterList)
 
     def updateChapterList(self, mangaSite, chapterList):
-        print 'updated the chapter list ... '
         data = chapterList
         self.chapterlist_adapter.data = data
         self.ids.chapterList.populate()
@@ -186,21 +187,20 @@ class MangaDownloader(TabbedPanel):
             self.downloadingMangasSelected.append(checkbox.downloadSessionId)
         else:
             self.downloadingMangasSelected.remove(checkbox.downloadSessionId)
-        print self.downloadingMangasSelected
 
     def pauseCancelDownloads(self, instance):
-        if instance == self.ids.pause:
+        if instance == self.ids.pauseDownloadSession:
             print "pause called"
-        elif instance == self.ids.pauseAll:
+        elif instance == self.ids.pauseAllDownloadSession:
             print "pause all called"
-        elif instance == self.ids.remove:
-            print "cancel called"
-        elif instance == self.ids.removeAll:
-            print "cancel all called"
-        elif instance == self.ids.resume:
-            print "cancel called"
-        elif instance == self.ids.resumeAl:
-            print "cancel all called"
+        elif instance == self.ids.removeDownloadSession:
+            print "remove called"
+        elif instance == self.ids.removeAllDownloadSession:
+            print "remove all called"
+        elif instance == self.ids.resumeDownloadSession:
+            print "resume called"
+        elif instance == self.ids.resumeAllDownloadSession:
+            print "resume all called"
 
 
 class MangaDownloaderApp(App):
@@ -209,6 +209,12 @@ class MangaDownloaderApp(App):
 
         mangaDownloaderInstance = MangaDownloader()
         return mangaDownloaderInstance
+
+    def on_start(self):
+        pass
+
+    def on_stop(self):
+        pass
 
 
 def on_chapterselect_checkbox_active(checkbox, value):

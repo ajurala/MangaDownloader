@@ -1,4 +1,4 @@
-import pyCurl
+from kivy.network.urlrequest import UrlRequest
 from lxml import etree
 from threading import Lock
 
@@ -39,7 +39,6 @@ class MangaStreamDownloader():
                 UrlRequest(self.mangaSiteURL, self.downloadMangaSuccess)
 
     def downloadMangaSuccess(self, req, result):
-        #print req
         with self.mangaLock:
             if self.callbackFunc is not None:
                 parser = etree.HTMLParser()
@@ -75,7 +74,6 @@ class MangaStreamDownloader():
         pass
 
     def downloadChapterList(self, url, callbackFunc):
-        print "Chapter list dwnload in ms for "+ url
         with self.chapterLock:
             self.chapterCallbackFunc = callbackFunc
             self.currentChapterListReq = UrlRequest(url, self.downloadChapterListSuccess)
@@ -101,7 +99,6 @@ class MangaStreamDownloader():
                     chapterInfo['url'] = chapterListDict[chapter]
                     chapterList.append(chapterInfo)
 
-                print chapterList
                 self.chapterCallbackFunc(self.mangaSiteName, chapterList)
                 self.chapterCallbackFunc = None
                 self.currentChapterListReq = None

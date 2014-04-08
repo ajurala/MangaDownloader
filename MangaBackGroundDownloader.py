@@ -48,7 +48,6 @@ class MangaBackGroundDownloader():
         callbackFunc = self.chapterRequestInfo.get(mangaSite, None)
 
         if callbackFunc is not None:
-            print "Chapter list got it "
             self.chapterRequestInfo.pop(mangaSite)
             callbackFunc(mangaSite, mangaList)
 
