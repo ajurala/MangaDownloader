@@ -19,7 +19,7 @@ class MangaStreamDownloader():
     mangaLock = Lock()
     chapterLock = Lock()
 
-    mangaPickle = "MangaStream.pkl"
+    mangaPickle = "MangaStream.db"
     mangaList = []
 
     config = None
