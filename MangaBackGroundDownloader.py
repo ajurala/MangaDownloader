@@ -7,9 +7,17 @@ class MangaBackGroundDownloader():
     mangaSiteRequestInfo = {}
     chapterRequestInfo = {}
     downloadRequestInfo = {}
+    config = None
 
     def __init__(self):
         pass
+
+    def setConfig(self, config):
+        self.config = config
+
+        for key in self.mangaSites.keys():
+            mangaObj = self.mangaSites[key]
+            mangaObj.setConfig(config)
 
     def downloadMangaList(self, mangaSite, func):
         #Request already pending then ignore

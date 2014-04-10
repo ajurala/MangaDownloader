@@ -1,0 +1,23 @@
+[
+    {
+        "type": "bool",
+        "title": "Enable Proxy",
+        "desc": "Toggle to enable/disable proxy",
+        "section": "proxy",
+        "key": "toggle_proxy"
+    },
+    {
+        "type": "string",
+        "title": "Proxy URL",
+        "desc": "Set the proxy url you want to use",
+        "section": "proxy",
+        "key": "proxy_url"
+    },
+    {
+        "type": "numeric",
+        "title": "Proxy port",
+        "desc": "Set the proxy port you want to use",
+        "section": "proxy",
+        "key": "proxy_port"
+    }
+]

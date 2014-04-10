@@ -22,11 +22,23 @@ class MangaStreamDownloader():
     mangaPickle = "MangaStream.pkl"
     mangaList = []
 
+    config = None
+    config_section = "proxy"
+    config_proxy_url = "proxy_url"
+    config_proxy_port = "proxy_port"
+    config_proxy_enable = "toggle_proxy"
+
     def __init__(self):
         try:
-            self.mangaList = pickle.load(open(self.mangaPickle, "rb"))
+            with open( self.mangaPickle, "rb" ) as fd:
+                self.mangaList = pickle.load(fd)
         except IOError:
             pass
+        except ValueError:
+            pass
+
+    def setConfig(self, config):
+        self.config = config
 
     def isRequestPending(self):
         return self.requestPending
@@ -107,4 +119,5 @@ class MangaStreamDownloader():
         return self.mangaList
 
     def dumpManga(self):
-        pickle.dump( self.mangaList, open( self.mangaPickle, "wb" ) )
+        with open( self.mangaPickle, "wb" ) as fd:
+            pickle.dump( self.mangaList, fd)

@@ -6,6 +6,8 @@ Config.set('kivy', 'exit_on_escape', 0)
 from kivy.app import App
 from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.adapters.listadapter import ListAdapter
+from kivy.uix.settings import SettingsWithSidebar
+from kivy.uix.settings import SettingsWithTabbedPanel
 
 import string
 import random
@@ -39,6 +41,8 @@ class MangaDownloader(TabbedPanel):
     ddata = []
 
     currentMangaSite = "MangaStream"
+
+    config = None
 
     args_converter = lambda row_index, rec: {
         'text': rec['name'],
@@ -104,6 +108,17 @@ class MangaDownloader(TabbedPanel):
         self.ids.resumeAllDownloadSession.bind(on_press=self.pauseCancelDownloads)
 
         self.mangaBackGroundDownloader.getMangaList(self.currentMangaSite, self.updateMangaList)
+
+
+        #Build the settings page
+        self.settings = SettingsWithSidebar()
+        self.settings.interface.menu.remove_widget(self.settings.interface.menu.close_button)
+        app = App.get_running_app()
+        self.config = app.load_config()
+        self.settings.add_json_panel('Proxy Settings', app.load_config(), 'proxy_settings.json')
+        self.ids.optionTab.add_widget(self.settings)
+
+        self.mangaBackGroundDownloader.setConfig(self.config)
 
     def downloadMangaList(self, instance):
         #update Listview
@@ -203,12 +218,21 @@ class MangaDownloader(TabbedPanel):
             print "resume all called"
 
 
+
 class MangaDownloaderApp(App):
     def build(self):
         global mangaDownloaderInstance
+        self.use_kivy_settings = False
 
         mangaDownloaderInstance = MangaDownloader()
         return mangaDownloaderInstance
+
+    def build_config(self, config):
+        config.setdefaults('proxy', {
+            'toggle_proxy': False,
+            'proxy_url': "",
+            'proxy_port': "8080"
+        })
 
     def on_start(self):
         pass
