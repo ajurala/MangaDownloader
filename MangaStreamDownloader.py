@@ -1,9 +1,9 @@
-from kivy.network.urlrequest import UrlRequest
 from lxml import etree
 from threading import Lock
 
 from StringIO import StringIO
 
+import MangaURLDownloader
 import pickle
 
 
@@ -30,7 +30,7 @@ class MangaStreamDownloader():
 
     def __init__(self):
         try:
-            with open( self.mangaPickle, "rb" ) as fd:
+            with open(self.mangaPickle, "rb") as fd:
                 self.mangaList = pickle.load(fd)
         except IOError:
             pass
@@ -48,7 +48,7 @@ class MangaStreamDownloader():
             with self.mangaLock:
                 self.callbackFunc = callbackFunc
                 self.requestPending = True
-                UrlRequest(self.mangaSiteURL, self.downloadMangaSuccess)
+                MangaURLDownloader.downloadUrl(self.mangaSiteURL, self.downloadMangaSuccess)
 
     def downloadMangaSuccess(self, req, result):
         with self.mangaLock:
@@ -88,7 +88,7 @@ class MangaStreamDownloader():
     def downloadChapterList(self, url, callbackFunc):
         with self.chapterLock:
             self.chapterCallbackFunc = callbackFunc
-            self.currentChapterListReq = UrlRequest(url, self.downloadChapterListSuccess)
+            self.currentChapterListReq = MangaURLDownloader.downloadUrl(url, self.downloadChapterListSuccess)
 
     def downloadChapterListSuccess(self, req, result):
 
