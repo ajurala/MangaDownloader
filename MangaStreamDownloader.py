@@ -150,6 +150,8 @@ class MangaStreamDownloader(MangaConfig):
                 downloadSession['currentChapter'] = 0
                 downloadSession['folder'] = folder
                 downloadSession['downloadChapterSessionsInfo'] = {}
+                downloadSession['totalImages'] = 0
+                downloadSession['totalDownloadedImages'] = 0
 
                 self.downloadSessions[downloadSessionId] = downloadSession
 
@@ -208,6 +210,8 @@ class MangaStreamDownloader(MangaConfig):
                     downloadChapterSessionInfo['imagesURLs'].append(imageURL)
                     downloadSession['downloadChapterSessionsInfo'][currentChapter] = downloadChapterSessionInfo
 
+                    downloadSession['totalImages'] += downloadSession['totalImages'] + 1
+
                     # Get the next url and see if needs to be downloaded
                     node = node.getParent()
                     url = node.get('href')
@@ -258,9 +262,73 @@ class MangaStreamDownloader(MangaConfig):
                 self.downloadSessions[downloadSessionId] = downloadSession
 
 
-    def chapterProgressInfo(self, downloadSessionId, percent):
-        pass
+    def chapterProgressInfo(self, downloadSessionId, downloadedCount, percent):
+        with self.sessionLock:
+            if downloadSessionId is not None:
+                downloadSession = self.downloadSessions.get(downloadSessionId, None)
+                if downloadSession is not None:
+                    totalProgress = (float(downloadSession['totalDownloadedImages'] + downloadedCount) / float(downloadSession['totalImages'])) * 100
+
+                    progressInfo = downloadSession['progressInfo']
+                    chapterProgressInfo = downloadSession['chapterProgressInfo']
+
+                    chapterProgressInfo(downloadSessionId, percent)
+                    progressInfo(downloadSessionId, totalProgress)
 
     def chapterDownloadSessionComplete(self, downloadSessionId):
-        pass
+        with self.sessionLock:
+            if downloadSessionId is not None:
+                downloadSession = self.downloadSessions.get(downloadSessionId, None)
+                if downloadSession is not None:
+                    currentChapter = downloadSession['currentChapter']
+                    downloadChapterSessionInfo = downloadSession['downloadChapterSessionsInfo'][currentChapter]
+                    currentChapterFolder = downloadChapterSessionInfo['folder']
 
+                    totalDownloadedImages = downloadSession['totalDownloadedImages'] + len(downloadChapterSessionInfo['imagesURLs'])
+                    totalProgress = (float(totalDownloadedImages) / float(downloadSession['totalImages'])) * 100
+
+                    currentChapter += 1
+
+                    downloadSession['currentChapter'] = currentChapter
+                    downloadSession['totalDownloadedImages'] = totalDownloadedImages
+
+                    percent = 100
+
+                    # Check if next chapter to be downloaded. If so then start it
+                    downloadSessionComplete = None
+                    chapterURLs = downloadSession['chapterURLs']
+                    if currentChapter < len(chapterURLs):
+                        percent = 0
+                        folder = os.path.join(downloadSession['folder'], downloadSession['chapterNames'][currentChapter])
+
+                        downloadSession['currentChapter'] = currentChapter
+
+                        downloadChapterSessionInfo = downloadSession['downloadChapterSessionsInfo'][currentChapter]
+                        downloadChapterSessionInfo['folder'] = folder
+
+                        sessionDownloader = MangaChapterSessionDownloader(downloadChapterSessionInfo['imagesURLs'], downloadSessionId,
+                                                                            self.chapterProgressInfo,
+                                                                            self.chapterDownloadSessionComplete,
+                                                                            folder)
+
+                        downloadChapterSessionInfo['chapterSessionDownloader'] = sessionDownloader
+                        downloadSession['downloadChapterSessionsInfo'][currentChapter] = downloadChapterSessionInfo
+                    else:
+                        downloadSessionComplete = downloadSession['downloadSessionComplete']
+
+
+                    progressInfo = downloadSession['progressInfo']
+                    chapterProgressInfo = downloadSession['chapterProgressInfo']
+                    chapterDownloadSessionComplete = downloadSession['chapterDownloadSessionComplete']
+
+                    self.downloadSessions[downloadSessionId] = downloadSession
+
+                    chapterProgressInfo(downloadSessionId, percent)
+                    progressInfo(downloadSessionId, totalProgress)
+                    chapterDownloadSessionComplete(downloadSessionId, currentChapterFolder)
+
+                    if downloadSessionComplete is not None:
+                        downloadSessionComplete(downloadSessionId)
+
+
+# TODo - Error handling needed? Maybe yes to indicate that something happened resume again

@@ -47,7 +47,8 @@ class MangaChapterSessionDownloader():
             # Calculate the percent and pass on the information
             toDownloadCount = len(self.toDownloadUrls)
             totalToDownloadCount = toDownloadCount + len(self.downloadingUrls)
-            percent =  int((float(self.urlCount - (totalToDownloadCount))/float(self.urlCount))*100.0)
+            downloadCompletedCount = self.urlCount - totalToDownloadCount
+            percent =  int((float(downloadCompletedCount)/float(self.urlCount))*100.0)
 
             if toDownloadCount > 0:
                 url = self.toDownloadUrls.pop(0)
@@ -61,7 +62,7 @@ class MangaChapterSessionDownloader():
             if totalToDownloadCount == 0:
                 self.downloadSessionComplete(self.downloadSessionId)
             else:
-                self.urlProgressInfo(self.downloadSessionId, percent)
+                self.urlProgressInfo(self.downloadSessionId, downloadCompletedCount, percent)
 
     def urlProgressInfo(self, response):
         # Send a proper progress info to the requester
