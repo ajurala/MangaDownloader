@@ -1,5 +1,8 @@
+import os
 import urllib2
 import threading
+
+from urllib2 import urlparse
 
 urlRequests = {}
 urlThreads = {}
@@ -31,13 +34,16 @@ class MangaURLDownloader(threading.Thread):
             bytes_so_far = 0
 
             finishCallback = urlThreadInfo['finishCallback']
-            file = urlThreadInfo['file']
+            folder = urlThreadInfo['folder']
             progressCallback = urlThreadInfo['progressCallback']
             url = urlThreadInfo['url']
 
             #Open file if url response to be saved in file
-            if file is not None:
-                fd = open(file, "wb")
+            if folder is not None:
+                urlSplitList = urlparse.urlsplit(url)
+                urlPath = urlSplitList[2]
+                file = urlPath.split('/')[-1]
+                fd = open(os.path.join(folder, file), "wb")
 
             while 1:
                 # If download stop issued then come out of it
@@ -56,7 +62,7 @@ class MangaURLDownloader(threading.Thread):
                 if not chunk:
                     break
 
-                if file is not None:
+                if folder is not None:
                     fd.write(chunk)
                 else:
                     result += chunk
@@ -78,7 +84,7 @@ class MangaURLDownloader(threading.Thread):
             return
 
 
-def downloadUrl(url, finishCallback, file=None, progressCallback=None):
+def downloadUrl(url, finishCallback, folder=None, progressCallback=None):
     response = None
 
     if finishCallback is not None:
@@ -93,7 +99,7 @@ def downloadUrl(url, finishCallback, file=None, progressCallback=None):
                 urlThreadInfo = {}
                 urlThreadInfo['thread'] = thread
                 urlThreadInfo['finishCallback'] = finishCallback
-                urlThreadInfo['file'] = file
+                urlThreadInfo['folder'] = folder
                 urlThreadInfo['progressCallback'] = progressCallback
                 urlThreadInfo['url'] = url
 

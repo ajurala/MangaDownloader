@@ -1,5 +1,5 @@
+import os
 from MangaStreamDownloader import MangaStreamDownloader
-
 
 class MangaBackGroundDownloader():
 
@@ -63,13 +63,27 @@ class MangaBackGroundDownloader():
         mangaObj = self.mangaSites.get(mangaSite, None)
 
         if mangaObj is not None:
+
+            folder = os.path.join(self.downloadPath, mangaSite, manga)
+
             #Call download for these urls
             downloadRequest = {}
             downloadRequest['mangaObj'] = mangaObj
             downloadRequest['func'] = func
-            self.downloadRequestInfo[downloadSessionId] = downloadRequest
+            downloadRequest['mangaSite'] = mangaSite
+            downloadRequest['manga'] = manga
+            downloadRequest['sessionPercent'] = 0
+            downloadRequest['chapterSessionPercent'] = 0
 
             #The manga site will return the urls
+            urls = mangaObj.loadDownloadChapters(urls, downloadSessionId,
+                                                    self.progressInfo, self.downloadSessionComplete,
+                                                    self.chapterProgressInfo, self.chapterDownloadSessionComplete,
+                                                    folder)
+
+            if len(urls) > 0:
+                self.downloadRequestInfo[downloadSessionId] = downloadRequest
+
             return urls
 
         return []
@@ -79,4 +93,18 @@ class MangaBackGroundDownloader():
 
         if downloadRequest is not None:
             mangaObj = downloadRequest['mangaObj']
+
             #Start resume to the download now
+            mangaObj.startResumeDownloadChapters(self, downloadSessionId)
+
+    def progressInfo(self, downloadSessionId, percent):
+        pass
+
+    def downloadSessionComplete(self, downloadSessionId):
+        pass
+
+    def chapterProgressInfo(self, downloadSessionId, percent):
+        pass
+
+    def chapterDownloadSessionComplete(self, downloadSessionId, folder):
+        pass
