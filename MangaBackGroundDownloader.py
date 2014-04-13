@@ -59,7 +59,7 @@ class MangaBackGroundDownloader():
             self.chapterRequestInfo.pop(mangaSite)
             callbackFunc(mangaSite, mangaList)
 
-    def loadDownloadChapters(self, mangaSite, manga, urls, downloadSessionId, func):
+    def loadDownloadChapters(self, mangaSite, manga, urlsInfo, downloadSessionId, func):
         mangaObj = self.mangaSites.get(mangaSite, None)
 
         if mangaObj is not None:
@@ -76,7 +76,7 @@ class MangaBackGroundDownloader():
             downloadRequest['chapterSessionPercent'] = 0
 
             #The manga site will return the urls
-            urls = mangaObj.loadDownloadChapters(urls, downloadSessionId,
+            urls = mangaObj.loadDownloadChapters(urlsInfo, downloadSessionId,
                                                     self.progressInfo, self.downloadSessionComplete,
                                                     self.chapterProgressInfo, self.chapterDownloadSessionComplete,
                                                     folder)
