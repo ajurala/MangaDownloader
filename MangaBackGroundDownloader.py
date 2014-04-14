@@ -1,4 +1,6 @@
 import os
+import zipfile
+
 from MangaStreamDownloader import MangaStreamDownloader
 
 class MangaBackGroundDownloader():
@@ -10,7 +12,7 @@ class MangaBackGroundDownloader():
     config = None
 
     def __init__(self):
-        pass
+        self.downloadPath = "./"
 
     def setConfig(self, config):
         self.config = config
@@ -95,7 +97,7 @@ class MangaBackGroundDownloader():
             mangaObj = downloadRequest['mangaObj']
 
             #Start resume to the download now
-            mangaObj.startResumeDownloadChapters(self, downloadSessionId)
+            mangaObj.startResumeDownloadChapters(downloadSessionId)
 
     def progressInfo(self, downloadSessionId, percent):
         pass
@@ -107,4 +109,13 @@ class MangaBackGroundDownloader():
         pass
 
     def chapterDownloadSessionComplete(self, downloadSessionId, folder):
-        pass
+        # Zip the folder and create the cbz
+        cbzf = zipfile.ZipFile(folder+'.cbz', 'w')
+        self.cbzdir(folder, cbzf)
+        cbzf.close()
+
+    def cbzdir(self, path, cbz):
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                cbzFileItem = os.path.join(root, file)
+                cbz.write(cbzFileItem, os.path.relpath(cbzFileItem, os.path.join(path, '..')))

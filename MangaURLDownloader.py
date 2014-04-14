@@ -1,7 +1,9 @@
 import os
+import socket
 import urllib2
 import threading
 
+from threading import Timer
 from urllib2 import urlparse
 
 urlRequests = {}
@@ -14,18 +16,50 @@ chunk_size = 8192
 
 class MangaURLDownloader(threading.Thread):
 
-    def __init__(self, response):
+    def __init__(self, requestId, url, finishCallback, folder, progressCallback, failDownload):
         threading.Thread.__init__(self)
-        self.response = response
+
+        urlThreadInfo = {}
+        urlThreadInfo['thread'] = self
+        with urlLock:
+            urlRequests[url] = requestId
+            urlThreads[requestId] = urlThreadInfo
+
+        self.finishCallback = finishCallback
+        self.folder = folder
+        self.progressCallback = progressCallback
+        self.failDownload = failDownload
+        self.url = url
+        self.requestId = requestId
         self.stopDownload = False
 
         self.semaphore = threading.BoundedSemaphore()
 
-    def run(self):
-        with urlLock:
-            urlThreadInfo = urlThreads.get(self.response, None)
+        self.failed = False
 
-        if urlThreadInfo is not None:
+    def readTimeout(self, response):
+        print "readTimeout called"
+        response.close()
+
+    def run(self):
+        print "Starting to download " + self.url
+        try:
+            user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
+            req = urllib2.Request(self.url, headers={'User-Agent': user_agent})
+            # timeout after 10 seconds
+            timeout = 10.0
+            self.response = urllib2.urlopen(req, None, timeout)
+        except urllib2.URLError:
+            # TODO - Log such issues
+            print "could not open the url " + self.url
+            self.response = None
+            self.failed = True
+        except socket.timeout:
+            print "could not open the url due to timeout " + self.url
+            self.response = None
+            self.failed = True
+
+        if self.response is not None:
             result = ""
 
             total_size = self.response.info().getheader('Content-Length')
@@ -33,91 +67,114 @@ class MangaURLDownloader(threading.Thread):
                 total_size = int(total_size.strip())
             bytes_so_far = 0
 
-            finishCallback = urlThreadInfo['finishCallback']
-            folder = urlThreadInfo['folder']
-            progressCallback = urlThreadInfo['progressCallback']
-            url = urlThreadInfo['url']
+            finishCallback = self.finishCallback
+            folder = self.folder
+            progressCallback = self.progressCallback
+            url = self.url
 
+            fileNotDownloaded = True
             #Open file if url response to be saved in file
             if folder is not None:
                 urlSplitList = urlparse.urlsplit(url)
                 urlPath = urlSplitList[2]
                 file = urlPath.split('/')[-1]
-                fd = open(os.path.join(folder, file), "wb")
+                file = os.path.join(folder, file)
 
-            while 1:
-                # If download stop issued then come out of it
-                if self.stopDownload:
-                    break
+                # Check for file size ...
+                if os.path.exists(file):
+                    currentSize = os.path.getsize(file)
+                    print file
+                    print total_size
+                    print currentSize
+                    if total_size is not None and total_size == currentSize:
+                        fileNotDownloaded = False
 
-                # If semaphore not acquired then it pauses the thread automatically
-                # TODO - What to do about situations where timeout happens for reading chunk
-                # as it was paused for a long time ???
-                with self.semaphore:
-                    pass
-
-                chunk = self.response.read(chunk_size)
-                bytes_so_far += len(chunk)
-
-                if not chunk:
-                    break
-
+            if fileNotDownloaded:
                 if folder is not None:
-                    fd.write(chunk)
-                else:
-                    result += chunk
+                    fd = open(file, "wb")
+                timeout = 20
+                while 1:
+                    # If download stop issued then come out of it
+                    if self.stopDownload:
+                        break
 
-                if total_size is not None and progressCallback is not None:
-                    percent = float(bytes_so_far) / total_size
-                    percent = round(percent*100, 2)
+                    # If semaphore not acquired then it pauses the thread automatically
+                    # TODO - What to do about situations where timeout happens for reading chunk
+                    # as it was paused for a long time ???
+                    with self.semaphore:
+                        pass
 
-                    progressCallback(self.response, percent)
+                    t = Timer(timeout, self.readTimeout, [self.response])
+                    t.start()
 
-            # Remove the references now as either the download is complete or stopped
-            urlRequests.pop(url)
-            urlThreads.pop(self.response)
+                    try:
+                        chunk = self.response.read(chunk_size)
+                    except:
+                        self.failed = True
+                        chunk = None
 
-            # if stop was not issued and callback present then call it
-            if not self.stopDownload and finishCallback:
-                finishCallback(self.response, result)
-        else:
-            return
+                    t.cancel()
 
+                    if not chunk:
+                        break
 
-def downloadUrl(url, finishCallback, folder=None, progressCallback=None):
-    response = None
+                    bytes_so_far += len(chunk)
+
+                    if folder is not None:
+                        fd.write(chunk)
+                    else:
+                        result += chunk
+
+                    if total_size is not None and progressCallback is not None:
+                        percent = float(bytes_so_far) / total_size
+                        percent = round(percent * 100.0, 2)
+
+                        progressCallback(self.requestId, percent)
+            else:
+                print "File already downloaded "+self.url
+        # Remove the references now as either the download is complete or stopped
+        urlRequests.pop(url)
+        urlThreads.pop(self.requestId)
+
+        # if stop was not issued and callback present then call it
+        if self.failed and self.failDownload:
+            self.failDownload(self.requestId)
+        elif not self.stopDownload and finishCallback:
+            finishCallback(self.requestId, result)
+
+class MangaURL():
+    def __init__(self, url):
+        self.url = url
+
+    def geturl(self):
+        return self.url
+
+def downloadUrl(url, finishCallback, folder=None, progressCallback=None, failDownload=None):
+    requestId = None
 
     if finishCallback is not None:
-        response = urlRequests.get(url, None)
-        if response is None:
+        with urlLock:
+            requestId = urlRequests.get(url, None)
 
-            response = urllib2.urlopen(url)
+        if requestId is None:
+            requestId = MangaURL(url)
 
-            # Create a thread and save the info here
-            thread = MangaURLDownloader(response)
-            with urlLock:
-                urlThreadInfo = {}
-                urlThreadInfo['thread'] = thread
-                urlThreadInfo['finishCallback'] = finishCallback
-                urlThreadInfo['folder'] = folder
-                urlThreadInfo['progressCallback'] = progressCallback
-                urlThreadInfo['url'] = url
-
-                urlThreads[response] = urlThreadInfo
-                urlRequests[url] = response
+            # Start a thread which saves info
+            thread = MangaURLDownloader(requestId, url, finishCallback, folder, progressCallback, failDownload)
 
             thread.setDaemon(True)
             thread.start()
 
-    return response
+    return requestId
 
 
-def pauseDownload(response):
+def pauseDownload(requestId):
     with urlLock:
-        urlThreadInfo = urlThreads.get(response, None)
+        urlThreadInfo = urlThreads.get(requestId, None)
 
     if urlThreadInfo is not None:
         thread = urlThreads['thread']
+
         # Call to acquire should lock the resource and hence should pause the chunk request
         thread.semaphore.acquire()
         return True
@@ -125,9 +182,9 @@ def pauseDownload(response):
     return False
 
 
-def resumeDownload(response):
+def resumeDownload(requestId):
     with urlLock:
-        urlThreadInfo = urlThreads.get(response, None)
+        urlThreadInfo = urlThreads.get(requestId, None)
 
     if urlThreadInfo is not None:
         thread = urlThreads['thread']
@@ -142,9 +199,9 @@ def resumeDownload(response):
     return False
 
 
-def stopDownload(response):
+def stopDownload(requestId):
     with urlLock:
-        urlThreadInfo = urlThreads.get(response, None)
+        urlThreadInfo = urlThreads.get(requestId, None)
 
     if urlThreadInfo is not None:
         thread = urlThreads['thread']

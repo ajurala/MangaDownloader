@@ -33,6 +33,7 @@ class MangaStreamDownloader(MangaConfig):
     downloadChapterPageInfo = {}
 
     def __init__(self):
+        MangaConfig.__init__(self)
         try:
             with open(self.mangaPickle, "rb") as fd:
                 self.mangaList = pickle.load(fd)
@@ -42,8 +43,8 @@ class MangaStreamDownloader(MangaConfig):
             pass
 
     def dumpManga(self):
-        with open( self.mangaPickle, "wb" ) as fd:
-            pickle.dump( self.mangaList, fd)
+        with open(self.mangaPickle, "wb") as fd:
+            pickle.dump(self.mangaList, fd)
 
     def isRequestPending(self):
         return self.requestPending
@@ -213,12 +214,15 @@ class MangaStreamDownloader(MangaConfig):
                     downloadSession['totalImages'] += downloadSession['totalImages'] + 1
 
                     # Get the next url and see if needs to be downloaded
-                    node = node.getParent()
+                    node = node.getparent()
                     url = node.get('href')
                     curUrl = req.geturl()
 
                     curPage = int(curUrl.split('/')[-1])
-                    nextPage = int(url.split('/')[-1])
+                    try:
+                        nextPage = int(url.split('/')[-1])
+                    except ValueError:
+                        nextPage = 0
 
                     if nextPage < curPage:
                         url = None
@@ -259,6 +263,8 @@ class MangaStreamDownloader(MangaConfig):
                         downloadChapterSessionInfo['chapterSessionDownloader'] = sessionDownloader
                         downloadSession['downloadChapterSessionsInfo'][currentChapter] = downloadChapterSessionInfo
 
+                        sessionDownloader.startResumeDownloadSession()
+
                 self.downloadSessions[downloadSessionId] = downloadSession
 
 
@@ -276,6 +282,7 @@ class MangaStreamDownloader(MangaConfig):
                     progressInfo(downloadSessionId, totalProgress)
 
     def chapterDownloadSessionComplete(self, downloadSessionId):
+        print "Chapter Download Complete"
         with self.sessionLock:
             if downloadSessionId is not None:
                 downloadSession = self.downloadSessions.get(downloadSessionId, None)
@@ -313,6 +320,8 @@ class MangaStreamDownloader(MangaConfig):
 
                         downloadChapterSessionInfo['chapterSessionDownloader'] = sessionDownloader
                         downloadSession['downloadChapterSessionsInfo'][currentChapter] = downloadChapterSessionInfo
+
+                        sessionDownloader.startResumeDownloadSession()
                     else:
                         downloadSessionComplete = downloadSession['downloadSessionComplete']
 
@@ -331,4 +340,4 @@ class MangaStreamDownloader(MangaConfig):
                         downloadSessionComplete(downloadSessionId)
 
 
-# TODo - Error handling needed? Maybe yes to indicate that something happened resume again
+# TODO - Error handling needed? Maybe yes to indicate that something happened resume again

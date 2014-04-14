@@ -56,6 +56,7 @@ Builder.load_string("""
         id: chapterSelect
         on_active: ctx['on_active'](*args)
         url: ctx.url
+        text: ctx.text
 
     MangaDownloaderLabel:
         id: chapterText

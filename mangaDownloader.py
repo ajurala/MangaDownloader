@@ -142,6 +142,7 @@ class MangaDownloader(TabbedPanel):
 
                 self.toDownloadManga = selected_object.text
                 self.toDownloadUrls = []
+                print "Starting to download now ..."
 
                 self.mangaBackGroundDownloader.downloadChapterList(self.currentMangaSite, selected_object.url, self.updateChapterList)
 
@@ -158,23 +159,23 @@ class MangaDownloader(TabbedPanel):
         while self.downloadingMangasIds.get(downloadSessionId, None) is not None:
             downloadSessionId = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20))
 
-        self.toDownloadUrls = self.mangaBackGroundDownloader.loadDownloadChapters(self.currentMangaSite,
+        urls = self.mangaBackGroundDownloader.loadDownloadChapters(self.currentMangaSite,
                                                                               self.toDownloadManga,
                                                                               self.toDownloadUrls,
                                                                               downloadSessionId,
                                                                               self.downloadingProgress)
 
-        if len(self.toDownloadUrls) > 0:
+        if len(urls) > 0:
           #Update downloading data with this instance. Pass the unique id for it
           downloadSession = {}
 
           downloadSession['text'] = self.currentMangaSite
-          downloadSession['mangaInfotext'] = self.toDownloadManga + " 1/" + str(len(self.toDownloadUrls))
+          downloadSession['mangaInfotext'] = self.toDownloadManga + " 1/" + str(len(urls))
           downloadSession['chapterInfotext'] = ""
           downloadSession['mangaProgress'] = 0
           downloadSession['chapterProgress'] = 0
           downloadSession['mangaName'] = self.toDownloadManga
-          downloadSession['numberOfChapters'] = len(self.toDownloadUrls)
+          downloadSession['numberOfChapters'] = len(urls)
 
           downloadSession['downloadSessionId'] = downloadSessionId
 
@@ -192,10 +193,14 @@ class MangaDownloader(TabbedPanel):
         pass
 
     def on_chapterselect_checkbox_active(self, checkbox, value):
+        chapterInfo = {}
+        chapterInfo['chapterName'] = checkbox.text
+        chapterInfo['url'] = checkbox.url
+
         if value:
-            self.toDownloadUrls.append(checkbox.url)
+            self.toDownloadUrls.append(chapterInfo)
         else:
-            self.toDownloadUrls.remove(checkbox.url)
+            self.toDownloadUrls.remove(chapterInfo)
 
     def on_down_checkbox_active(self, checkbox, value):
         if value:
