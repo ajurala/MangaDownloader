@@ -9,6 +9,7 @@ from kivy.adapters.listadapter import ListAdapter
 from kivy.uix.settings import SettingsWithSidebar
 from kivy.uix.settings import SettingsWithTabbedPanel
 
+import os
 import string
 import random
 import mangaViewDefines
@@ -115,10 +116,12 @@ class MangaDownloader(TabbedPanel):
         self.settings.interface.menu.remove_widget(self.settings.interface.menu.close_button)
         app = App.get_running_app()
         self.config = app.load_config()
-        self.settings.add_json_panel('Proxy Settings', app.load_config(), 'proxy_settings.json')
+        self.settings.add_json_panel('Manga Settings', self.config, 'manga_settings.json')
+        self.settings.add_json_panel('Proxy Settings', self.config, 'proxy_settings.json')
         self.ids.optionTab.add_widget(self.settings)
 
         self.mangaBackGroundDownloader.setConfig(self.config)
+        self.mangaBackGroundDownloader.setDownloadPath(self.config.get('manga', 'download_folder'))
 
     def downloadMangaList(self, instance):
         #update Listview
@@ -166,28 +169,28 @@ class MangaDownloader(TabbedPanel):
                                                                               self.downloadingProgress)
 
         if len(urls) > 0:
-          #Update downloading data with this instance. Pass the unique id for it
-          downloadSession = {}
+            #Update downloading data with this instance. Pass the unique id for it
+            downloadSession = {}
 
-          downloadSession['text'] = self.currentMangaSite
-          downloadSession['mangaInfotext'] = self.toDownloadManga + " 1/" + str(len(urls))
-          downloadSession['chapterInfotext'] = ""
-          downloadSession['mangaProgress'] = 0
-          downloadSession['chapterProgress'] = 0
-          downloadSession['mangaName'] = self.toDownloadManga
-          downloadSession['numberOfChapters'] = len(urls)
+            downloadSession['text'] = self.currentMangaSite
+            downloadSession['mangaInfotext'] = self.toDownloadManga + " 1/" + str(len(urls))
+            downloadSession['chapterInfotext'] = ""
+            downloadSession['mangaProgress'] = 0
+            downloadSession['chapterProgress'] = 0
+            downloadSession['mangaName'] = self.toDownloadManga
+            downloadSession['numberOfChapters'] = len(urls)
 
-          downloadSession['downloadSessionId'] = downloadSessionId
+            downloadSession['downloadSessionId'] = downloadSessionId
 
-          #self.ddata.append(downloadSession)
-          #self.downloadingMangasIds[downloadSessionId] = len(self.ddata) - 1
+            #self.ddata.append(downloadSession)
+            #self.downloadingMangasIds[downloadSessionId] = len(self.ddata) - 1
 
-          self.downloadlist_adapter.data.append(downloadSession)
-          self.downloadingMangasIds[downloadSessionId] = len(self.downloadlist_adapter.data) - 1
+            self.downloadlist_adapter.data.append(downloadSession)
+            self.downloadingMangasIds[downloadSessionId] = len(self.downloadlist_adapter.data) - 1
 
-          self.ids.downloadList.populate()
+            self.ids.downloadList.populate()
 
-          self.mangaBackGroundDownloader.startResumeDownloadChapters(downloadSessionId)
+            self.mangaBackGroundDownloader.startResumeDownloadChapters(downloadSessionId)
 
     def downloadingProgress(self, downloadSessionId, chapterProgress):
         pass
@@ -237,6 +240,11 @@ class MangaDownloaderApp(App):
             'toggle_proxy': False,
             'proxy_url': "",
             'proxy_port': "8080"
+        })
+
+
+        config.setdefaults('manga', {
+            'download_folder': os.getcwd()
         })
 
     def on_start(self):

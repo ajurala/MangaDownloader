@@ -1,7 +1,10 @@
 import os
+import shutil
 import zipfile
 
+from kivy.app import App
 from MangaStreamDownloader import MangaStreamDownloader
+
 
 class MangaBackGroundDownloader():
 
@@ -20,6 +23,9 @@ class MangaBackGroundDownloader():
         for key in self.mangaSites.keys():
             mangaObj = self.mangaSites[key]
             mangaObj.setConfig(config)
+
+    def setDownloadPath(self, downloadPath):
+        self.downloadPath = downloadPath
 
     def downloadMangaList(self, mangaSite, func):
         #Request already pending then ignore
@@ -114,8 +120,18 @@ class MangaBackGroundDownloader():
         self.cbzdir(folder, cbzf)
         cbzf.close()
 
+        delete_folder = self.config.get('manga', 'delete_folder')
+        #print delete_folder
+        if delete_folder == "1":
+            try:
+                #print "removing folder: " + folder
+                shutil.rmtree(folder)
+            except OSError as err:
+                print "Could not remove folder "+ folder
+                print err
+
     def cbzdir(self, path, cbz):
         for root, dirs, files in os.walk(path):
             for file in files:
                 cbzFileItem = os.path.join(root, file)
-                cbz.write(cbzFileItem, os.path.relpath(cbzFileItem, os.path.join(path, '..')))
+                cbz.write(cbzFileItem, os.path.relpath(cbzFileItem, os.path.join(path, '.')))

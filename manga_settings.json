@@ -1,0 +1,16 @@
+[
+    {
+        "type": "path",
+        "title": "Download Folder",
+        "desc": "Choose the folder where mangas are saved",
+        "section": "manga",
+        "key": "download_folder"
+    },
+    {
+        "type": "bool",
+        "title": "Delete Folder",
+        "desc": "Delete the folder where original images are downloaded",
+        "section": "manga",
+        "key": "delete_folder"
+    }
+]
