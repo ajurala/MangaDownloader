@@ -1,6 +1,7 @@
 import os
 import shutil
 import zipfile
+import MangaURLDownloader
 
 from kivy.app import App
 from MangaStreamDownloader import MangaStreamDownloader
@@ -26,6 +27,9 @@ class MangaBackGroundDownloader():
 
     def setDownloadPath(self, downloadPath):
         self.downloadPath = downloadPath
+
+    def setProxyInfo(self, proxy_enable, proxy_url, proxy_port):
+        MangaURLDownloader.setProxyInfo(proxy_enable, proxy_url, proxy_port)
 
     def downloadMangaList(self, mangaSite, func):
         #Request already pending then ignore
@@ -115,20 +119,22 @@ class MangaBackGroundDownloader():
         pass
 
     def chapterDownloadSessionComplete(self, downloadSessionId, folder):
-        # Zip the folder and create the cbz
-        cbzf = zipfile.ZipFile(folder+'.cbz', 'w')
-        self.cbzdir(folder, cbzf)
-        cbzf.close()
 
-        delete_folder = self.config.get('manga', 'delete_folder')
-        #print delete_folder
-        if delete_folder == "1":
-            try:
-                #print "removing folder: " + folder
-                shutil.rmtree(folder)
-            except OSError as err:
-                print "Could not remove folder "+ folder
-                print err
+        if self.config.get('manga', 'download_as') == "CBZ":
+            # Zip the folder and create the cbz
+            cbzf = zipfile.ZipFile(folder+'.cbz', 'w')
+            self.cbzdir(folder, cbzf)
+            cbzf.close()
+
+            delete_folder = self.config.get('manga', 'delete_folder')
+            #print delete_folder
+            if delete_folder == "1":
+                try:
+                    #print "removing folder: " + folder
+                    shutil.rmtree(folder)
+                except OSError as err:
+                    print "Could not remove folder "+ folder
+                    print err
 
     def cbzdir(self, path, cbz):
         for root, dirs, files in os.walk(path):

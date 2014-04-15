@@ -121,7 +121,27 @@ class MangaDownloader(TabbedPanel):
         self.ids.optionTab.add_widget(self.settings)
 
         self.mangaBackGroundDownloader.setConfig(self.config)
+
+        self.settings.bind(on_config_change=self.on_config_change)
+        self.setDownloadPath()
+        self.setProxyInfo()
+
+    def on_config_change(self, instance, config, section, key, value):
+        if instance is self.settings and config is self.config:
+            if section == "proxy":
+                self.setProxyInfo()
+            if section == "manga" and key == "download_folder":
+                self.setDownloadPath()
+
+    def setDownloadPath(self):
         self.mangaBackGroundDownloader.setDownloadPath(self.config.get('manga', 'download_folder'))
+
+    def setProxyInfo(self):
+        proxy_enable = self.config.get('proxy', 'proxy_enable') == "1"
+        proxy_url = self.config.get('proxy', 'proxy_url')
+        proxy_port = self.config.get('proxy', 'proxy_port')
+
+        self.mangaBackGroundDownloader.setProxyInfo(proxy_enable, proxy_url, proxy_port)
 
     def downloadMangaList(self, instance):
         #update Listview
@@ -237,14 +257,15 @@ class MangaDownloaderApp(App):
 
     def build_config(self, config):
         config.setdefaults('proxy', {
-            'toggle_proxy': False,
+            'proxy_enable': False,
             'proxy_url': "",
             'proxy_port': "8080"
         })
 
 
         config.setdefaults('manga', {
-            'download_folder': os.getcwd()
+            'download_folder': os.getcwd(),
+            'download_as': "CBZ"
         })
 
     def on_start(self):

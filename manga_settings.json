@@ -7,9 +7,18 @@
         "key": "download_folder"
     },
     {
+        "type": "options",
+        "title": "Download as",
+        "desc": "Download the manga as folder or cbz format",
+        "section": "manga",
+        "key": "download_as",
+        "options": ["Folder", "CBZ"]
+
+    },
+    {
         "type": "bool",
         "title": "Delete Folder",
-        "desc": "Delete the folder where original images are downloaded",
+        "desc": "Delete the folder where original images are downloaded in non-folder mode",
         "section": "manga",
         "key": "delete_folder"
     }

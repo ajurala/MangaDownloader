@@ -4,7 +4,7 @@
         "title": "Enable Proxy",
         "desc": "Toggle to enable/disable proxy",
         "section": "proxy",
-        "key": "toggle_proxy"
+        "key": "proxy_enable"
     },
     {
         "type": "string",

@@ -39,7 +39,9 @@ class MangaStreamDownloader(MangaConfig):
                 self.mangaList = pickle.load(fd)
         except IOError:
             pass
-        except ValueError:
+        except ValueError as err:
+            print "Still getting ValueError"
+            print err
             pass
 
     def dumpManga(self):

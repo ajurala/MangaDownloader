@@ -13,6 +13,9 @@ urlLock = threading.Lock()
 
 chunk_size = 8192
 
+# proxy_enable = False
+# proxy_url = ""
+# proxy_port = ""
 
 class MangaURLDownloader(threading.Thread):
 
@@ -43,6 +46,11 @@ class MangaURLDownloader(threading.Thread):
 
     def run(self):
         print "Starting to download " + self.url
+
+        finishCallback = self.finishCallback
+        folder = self.folder
+        progressCallback = self.progressCallback
+        url = self.url
         try:
             user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
             req = urllib2.Request(self.url, headers={'User-Agent': user_agent})
@@ -66,11 +74,6 @@ class MangaURLDownloader(threading.Thread):
             if total_size is not None:
                 total_size = int(total_size.strip())
             bytes_so_far = 0
-
-            finishCallback = self.finishCallback
-            folder = self.folder
-            progressCallback = self.progressCallback
-            url = self.url
 
             fileNotDownloaded = True
             #Open file if url response to be saved in file
@@ -133,13 +136,14 @@ class MangaURLDownloader(threading.Thread):
             else:
                 print "File already downloaded "+self.url
         # Remove the references now as either the download is complete or stopped
-        urlRequests.pop(url)
+        if url is not None:
+            urlRequests.pop(url)
         urlThreads.pop(self.requestId)
 
         # if stop was not issued and callback present then call it
-        if self.failed and self.failDownload:
+        if self.failed and self.failDownload is not None:
             self.failDownload(self.requestId)
-        elif not self.stopDownload and finishCallback:
+        elif not self.failed and not self.stopDownload and finishCallback is not None:
             finishCallback(self.requestId, result)
 
 class MangaURL():
@@ -210,3 +214,16 @@ def stopDownload(requestId):
         return True
 
     return False
+
+def setProxyInfo(proxy_enable, proxy_url, proxy_port):
+        # self.proxy_enable = proxy_enable
+        # self.proxy_url = proxy_url
+        # self.proxy_port = proxy_port
+
+        if proxy_enable:
+            proxy = urllib2.ProxyHandler({'http': proxy_url + ":" + proxy_port})
+        else:
+            proxy = urllib2.ProxyHandler({})
+
+        opener = urllib2.build_opener(proxy)
+        urllib2.install_opener(opener)
