@@ -89,7 +89,7 @@ class MangaBackGroundDownloader():
 
             #The manga site will return the urls
             urls = mangaObj.loadDownloadChapters(urlsInfo, downloadSessionId,
-                                                    self.progressInfo, self.downloadSessionComplete,
+                                                    self.progressInfo, self.downloadSessionComplete, self.downloadSessionFailed,
                                                     self.chapterProgressInfo, self.chapterDownloadSessionComplete,
                                                     folder)
 
@@ -113,7 +113,18 @@ class MangaBackGroundDownloader():
         pass
 
     def downloadSessionComplete(self, downloadSessionId):
-        pass
+        # Remove the session on complete
+        if self.downloadRequestInfo.get(downloadSessionId, None) is not None:
+            self.downloadRequestInfo.pop(downloadSessionId)
+
+    def downloadSessionFailed(self, downloadSessionId):
+        # Tell the UI that it has to show some proper message
+        downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
+
+        if downloadRequest is not None:
+            func = downloadRequest['func']
+            # Call the func to update UI
+
 
     def chapterProgressInfo(self, downloadSessionId, percent):
         pass

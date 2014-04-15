@@ -4,12 +4,13 @@ import MangaUtils
 
 class MangaChapterSessionDownloader():
 
-    def __init__(self, urls, downloadSessionId, progressInfo, downloadSessionComplete, folder):
+    def __init__(self, urls, downloadSessionId, progressInfo, downloadSessionComplete, failedDownload, folder):
         # Save these info
 
         self.toDownloadUrls = urls
         self.progressInfo = progressInfo
         self.downloadSessionComplete = downloadSessionComplete
+        self.failedDownload = failedDownload
         self.downloadSessionId = downloadSessionId
         self.folder = folder
         self.urlCount = len(urls)
@@ -22,22 +23,29 @@ class MangaChapterSessionDownloader():
         #List of responses that are being download
         self.downloadingUrls = {}
 
+        self.lock = Lock()
+
         self.parallelUrlDownloads = 4
 
-        self.lock = Lock()
+        self.downloadInProgress = False
 
     def startResumeDownloadSession(self):
         #Start Or Resume the download
         #Once failure count reaches 0, do not continue with the session and wait for reinitialisation
         print "Start to download a chapter"
         with self.lock:
-            self.failureCount = 4
+            if not self.downloadInProgress:
+                self.downloadInProgress = True
+                self.failureCount = 10
 
-            for i in range(self.parallelUrlDownloads):
-                url = self.toDownloadUrls.pop(0)
+                parallelUrlDownloads = self.parallelUrlDownloads
 
-                response = MangaURLDownloader.downloadUrl(url, self.urlDownloadComplete, self.folder, failDownload=self.failedDownload)
-                self.downloadingUrls[response] = url
+                for i in range(parallelUrlDownloads):
+                    url = self.toDownloadUrls.pop(0)
+
+                    response = MangaURLDownloader.downloadUrl(url, self.urlDownloadComplete, self.folder, failDownload=self.failedDownload)
+                    self.downloadingUrls[response] = url
+                    self.parallelUrlDownloads -= 1
 
     def urlDownloadComplete(self, response, result):
         # Send a proper progress/complete info to the requester
@@ -47,17 +55,20 @@ class MangaChapterSessionDownloader():
             if url is not None:
                 self.downloadingUrls.pop(response)
 
+            self.parallelUrlDownloads += 1
+
             # Calculate the percent and pass on the information
             toDownloadCount = len(self.toDownloadUrls)
             totalToDownloadCount = toDownloadCount + len(self.downloadingUrls)
             downloadCompletedCount = self.urlCount - totalToDownloadCount
-            percent =  int((float(downloadCompletedCount)/float(self.urlCount))*100.0)
+            percent = int((float(downloadCompletedCount)/float(self.urlCount))*100.0)
 
-            if toDownloadCount > 0:
+            if toDownloadCount > 0 and self.failureCount > 0:
                 url = self.toDownloadUrls.pop(0)
 
                 response = MangaURLDownloader.downloadUrl(url, self.urlDownloadComplete, self.folder)
                 self.downloadingUrls[response] = url
+                self.parallelUrlDownloads -= 1
 
             # This can be done outside lock too.
             # But on calling callback within lock will make sure that UI updates happen
@@ -67,6 +78,10 @@ class MangaChapterSessionDownloader():
                 self.downloadSessionComplete(self.downloadSessionId)
             else:
                 self.progressInfo(self.downloadSessionId, downloadCompletedCount, percent)
+
+            if self.failureCount <= 0:
+                self.downloadInProgress = False
+                self.failedDownload(self.downloadSessionId)
 
     def urlProgressInfo(self, response):
         # Send a proper progress info to the requester

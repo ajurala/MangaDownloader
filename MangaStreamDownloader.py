@@ -126,7 +126,7 @@ class MangaStreamDownloader(MangaConfig):
     def getMangaList(self):
         return self.mangaList
 
-    def loadDownloadChapters(self, urlsInfo, downloadSessionId, progressInfo, downloadSessionComplete,
+    def loadDownloadChapters(self, urlsInfo, downloadSessionId, progressInfo, downloadSessionComplete, downloadSessionFailed,
                                 chapterProgressInfo, chapterDownloadSessionComplete, folder):
         # Check the urls that is already being downloaded and start a new session for remaining ones
         temp_urls = []
@@ -142,17 +142,20 @@ class MangaStreamDownloader(MangaConfig):
                     temp_chapter_names.append(chapterName)
                     self.downloadURLs[url] = downloadSessionId
 
+            print "Number of chapters in this session " + str(len(temp_urls))
             if len(temp_urls) > 0:
                 downloadSession = {}
+                downloadSession['downloadInProgress'] = False
                 downloadSession['progressInfo'] = progressInfo
                 downloadSession['downloadSessionComplete'] = downloadSessionComplete
                 downloadSession['chapterProgressInfo'] = chapterProgressInfo
                 downloadSession['chapterDownloadSessionComplete'] = chapterDownloadSessionComplete
+                downloadSession['downloadSessionFailed'] = downloadSessionFailed
                 downloadSession['chapterURLs'] = temp_urls
                 downloadSession['chapterNames'] = temp_chapter_names
                 downloadSession['currentChapter'] = 0
                 downloadSession['folder'] = folder
-                downloadSession['downloadChapterSessionsInfo'] = {}
+                downloadSession['downloadChapterSessionsInfo'] = []
                 downloadSession['totalImages'] = 0
                 downloadSession['totalDownloadedImages'] = 0
 
@@ -163,7 +166,9 @@ class MangaStreamDownloader(MangaConfig):
     def startResumeDownloadChapters(self, downloadSessionId):
         with self.sessionLock:
             downloadSession = self.downloadSessions.get(downloadSessionId, None)
-            if downloadSession is not None:
+            if downloadSession is not None and not downloadSession['downloadInProgress']:
+
+                downloadSession['downloadInProgress'] = True
 
                 # From these temp_urls get all the manga image urls and then initiate threads
                 chapterURLs = downloadSession['chapterURLs']
@@ -175,7 +180,7 @@ class MangaStreamDownloader(MangaConfig):
                 downloadChapterSessionInfo['chapterSessionDownloader'] = None
                 downloadChapterSessionInfo['folder'] = None
 
-                downloadSession['downloadChapterSessionsInfo'][currentChapter] = downloadChapterSessionInfo
+                downloadSession['downloadChapterSessionsInfo'].append(downloadChapterSessionInfo)
 
                 req = MangaURLDownloader.downloadUrl(url, self.parsedChapterPage)
 
@@ -240,7 +245,7 @@ class MangaStreamDownloader(MangaConfig):
                             downloadChapterSessionInfo['chapterSessionDownloader'] = None
                             downloadChapterSessionInfo['folder'] = None
 
-                            downloadSession['downloadChapterSessionsInfo'][currentChapter] = downloadChapterSessionInfo
+                            downloadSession['downloadChapterSessionsInfo'].append(downloadChapterSessionInfo)
                             downloadSession['currentChapter'] = currentChapter
 
                     if url is not None:
@@ -260,6 +265,7 @@ class MangaStreamDownloader(MangaConfig):
                         sessionDownloader = MangaChapterSessionDownloader(downloadChapterSessionInfo['imagesURLs'], downloadSessionId,
                                                                             self.chapterProgressInfo,
                                                                             self.chapterDownloadSessionComplete,
+                                                                            self.chapterDownloadSessionFailed,
                                                                             folder)
 
                         downloadChapterSessionInfo['chapterSessionDownloader'] = sessionDownloader
@@ -296,7 +302,17 @@ class MangaStreamDownloader(MangaConfig):
                     totalDownloadedImages = downloadSession['totalDownloadedImages'] + len(downloadChapterSessionInfo['imagesURLs'])
                     totalProgress = (float(totalDownloadedImages) / float(downloadSession['totalImages'])) * 100
 
-                    currentChapter += 1
+                    chapterURLs = downloadSession['chapterURLs']
+
+                    url = chapterURLs[currentChapter]
+
+                    if self.downloadURLs.get(url, None) is not None:
+                        self.downloadURLs.pop(url)
+
+                    downloadSession['chapterURLs'].pop(currentChapter)
+                    downloadSession['chapterNames'].pop(currentChapter)
+                    downloadSession['downloadChapterSessionsInfo'].pop(currentChapter)
+                    #currentChapter += 1
 
                     downloadSession['currentChapter'] = currentChapter
                     downloadSession['totalDownloadedImages'] = totalDownloadedImages
@@ -305,12 +321,12 @@ class MangaStreamDownloader(MangaConfig):
 
                     # Check if next chapter to be downloaded. If so then start it
                     downloadSessionComplete = None
-                    chapterURLs = downloadSession['chapterURLs']
-                    if currentChapter < len(chapterURLs):
+                    
+                    if currentChapter < len(downloadSession['chapterURLs']):
                         percent = 0
                         folder = os.path.join(downloadSession['folder'], downloadSession['chapterNames'][currentChapter])
 
-                        downloadSession['currentChapter'] = currentChapter
+                        #downloadSession['currentChapter'] = currentChapter
 
                         downloadChapterSessionInfo = downloadSession['downloadChapterSessionsInfo'][currentChapter]
                         downloadChapterSessionInfo['folder'] = folder
@@ -318,6 +334,7 @@ class MangaStreamDownloader(MangaConfig):
                         sessionDownloader = MangaChapterSessionDownloader(downloadChapterSessionInfo['imagesURLs'], downloadSessionId,
                                                                             self.chapterProgressInfo,
                                                                             self.chapterDownloadSessionComplete,
+                                                                            self.chapterDownloadSessionFailed,
                                                                             folder)
 
                         downloadChapterSessionInfo['chapterSessionDownloader'] = sessionDownloader
@@ -341,5 +358,11 @@ class MangaStreamDownloader(MangaConfig):
                     if downloadSessionComplete is not None:
                         downloadSessionComplete(downloadSessionId)
 
-
-# TODO - Error handling needed? Maybe yes to indicate that something happened resume again
+    def chapterDownloadSessionFailed(self, downloadSessionId):
+        with self.sessionLock:
+            if downloadSessionId is not None:
+                downloadSession = self.downloadSessions.get(downloadSessionId, None)
+                if downloadSession is not None:
+                    downloadSessionFailed = downloadSession['downloadSessionFailed']
+                    downloadSession['downloadInProgress'] = False
+                    downloadSessionFailed(downloadSessionId)
