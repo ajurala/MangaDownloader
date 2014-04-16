@@ -133,7 +133,11 @@ class MangaBackGroundDownloader():
 
         if self.config.get('manga', 'download_as') == "CBZ":
             # Zip the folder and create the cbz
-            cbzf = zipfile.ZipFile(folder+'.cbz', 'w')
+            fileCBZ = folder+'.cbz'
+
+            # Delete the cbz first
+            os.remove(fileCBZ)
+            cbzf = zipfile.ZipFile(fileCBZ, 'w')
             self.cbzdir(folder, cbzf)
             cbzf.close()
 
