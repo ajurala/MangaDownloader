@@ -7,7 +7,7 @@ from kivy.app import App
 from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.adapters.listadapter import ListAdapter
 from kivy.uix.settings import SettingsWithSidebar
-from kivy.uix.settings import SettingsWithTabbedPanel
+from kivy.utils import escape_markup
 from threading import Lock
 
 import os
@@ -76,7 +76,8 @@ class MangaDownloader(TabbedPanel):
         'chapterProgress': rec['chapterProgress'],
         'on_active': on_down_checkbox_active,
         'mangaName': rec['text'],
-        'downloadSessionId': rec['downloadSessionId']
+        'downloadSessionId': rec['downloadSessionId'],
+        'downloadCompleted': rec['downloadCompleted']
     }
 
     downloadlist_adapter = ListAdapter(data=[],
@@ -198,21 +199,32 @@ class MangaDownloader(TabbedPanel):
                 downloadSession['numberOfChapters'] = len(urls)
 
                 downloadSession['downloadSessionId'] = downloadSessionId
+                downloadSession['downloadCompleted'] = False
 
                 #self.ddata.append(downloadSession)
                 #self.downloadingMangasIds[downloadSessionId] = len(self.ddata) - 1
 
                 self.downloadlist_adapter.data.append(downloadSession)
-                self.downloadingMangasIds[downloadSessionId] = len(self.downloadlist_adapter.data) - 1
+                self.downloadingMangasIds[downloadSessionId] = self.downloadlist_adapter.data[-1] #len(self.downloadlist_adapter.data) - 1
 
                 self.ids.downloadList.populate()
 
                 self.mangaBackGroundDownloader.startResumeDownloadChapters(downloadSessionId)
 
-    def downloadingProgress(self, downloadSessionId, chapterProgress, chapterInfo, sessionProgress, mangaInfo, sessionFail):
+    def downloadingProgress(self, downloadSessionId, chapterProgress=0, chapterInfo="", sessionProgress=0, mangaInfo="", sessionFail=False):
         with self.downloadUILock:
-            index = self.downloadingMangasIds[downloadSessionId]
+            #index = self.downloadingMangasIds[downloadSessionId]
+            #downloadSession = self.downloadlist_adapter.data[index]
+
+            downloadSession = self.downloadingMangasIds[downloadSessionId]
             if sessionFail:
+                chapterInfotext = "[b][color=ff0000]" + escape_markup("Failed to download Chapter ") + \
+                                  "[color=000000]" + escape_markup(chapterInfo) + "[/color]" + \
+                                  escape_markup(" Try again by clicking 'Resume' button") + "[/b][/color]"
+
+                downloadSession['chapterInfotext'] = chapterInfotext
+                self.ids.downloadList.populate()
+            else:
                 pass
 
 

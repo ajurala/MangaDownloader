@@ -87,6 +87,7 @@ Builder.load_string("""
                 on_active: ctx['on_active'](*args)
                 mangaName: ctx.mangaName
                 downloadSessionId: ctx.downloadSessionId
+                downloadCompleted: ctx.downloadCompleted
 
             MangaDownloaderLabel:
                 id: mangaName
@@ -107,6 +108,7 @@ Builder.load_string("""
             id: chapterDownloadInfo
             size_hint_y: 4
             text: ctx.chapterInfotext
+            markup: True
 
         ProgressBar:
             id: chapterDownloadProgress

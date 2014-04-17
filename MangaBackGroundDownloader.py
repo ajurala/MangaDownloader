@@ -119,14 +119,13 @@ class MangaBackGroundDownloader():
             func = downloadRequest['func']
             self.downloadRequestInfo.pop(downloadSessionId)
 
-    def downloadSessionFailed(self, downloadSessionId):
+    def downloadSessionFailed(self, downloadSessionId, currentChapterName):
         # Tell the UI that it has to show some proper message
         downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
 
         if downloadRequest is not None:
             func = downloadRequest['func']
-            # Call the func to update UI
-
+            func(downloadSessionId, chapterInfo=currentChapterName, sessionFail=True)
 
     def chapterProgressInfo(self, downloadSessionId, percent):
         pass

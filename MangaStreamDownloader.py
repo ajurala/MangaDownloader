@@ -182,13 +182,20 @@ class MangaStreamDownloader(MangaConfig):
 
                 downloadSession['downloadChapterSessionsInfo'].append(downloadChapterSessionInfo)
 
-                req = MangaURLDownloader.downloadUrl(url, self.parsedChapterPage)
+                req = MangaURLDownloader.downloadUrl(url, self.parsedChapterPage, failDownload=self.parseChapterPageFailed)
 
                 self.downloadChapterPageInfo[req] = downloadSessionId
 
                 return True
 
         return False
+
+    def parseChapterPageFailed(self, req):
+        print "Page parsing failed"
+        with self.sessionLock:
+            downloadSessionId = self.downloadChapterPageInfo.get(req, None)
+
+        self.chapterDownloadSessionFailed(downloadSessionId)
 
     def parsedChapterPage(self, req, result):
         with self.sessionLock:
@@ -249,7 +256,7 @@ class MangaStreamDownloader(MangaConfig):
                             downloadSession['currentChapter'] = currentChapter
 
                     if url is not None:
-                        req = MangaURLDownloader.downloadUrl(url, self.parsedChapterPage)
+                        req = MangaURLDownloader.downloadUrl(url, self.parsedChapterPage, failDownload=self.parseChapterPageFailed)
 
                         self.downloadChapterPageInfo[req] = downloadSessionId
                     else:
@@ -368,6 +375,7 @@ class MangaStreamDownloader(MangaConfig):
             downloadSessionComplete(downloadSessionId)
 
     def chapterDownloadSessionFailed(self, downloadSessionId):
+        print "Chapter Download failed"
         downloadSessionFailed = None
         with self.sessionLock:
             if downloadSessionId is not None:
@@ -375,6 +383,8 @@ class MangaStreamDownloader(MangaConfig):
                 if downloadSession is not None:
                     downloadSessionFailed = downloadSession['downloadSessionFailed']
                     downloadSession['downloadInProgress'] = False
+                    currentChapter = downloadSession['currentChapter']
+                    currentChapterName = downloadSession['chapterNames'][currentChapter]
 
         if downloadSessionFailed is not None:
-            downloadSessionFailed(downloadSessionId)
+            downloadSessionFailed(downloadSessionId, currentChapterName)
