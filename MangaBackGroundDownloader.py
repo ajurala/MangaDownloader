@@ -3,7 +3,6 @@ import shutil
 import zipfile
 import MangaURLDownloader
 
-from kivy.app import App
 from MangaStreamDownloader import MangaStreamDownloader
 
 
