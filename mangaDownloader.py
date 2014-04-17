@@ -8,6 +8,7 @@ from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.adapters.listadapter import ListAdapter
 from kivy.uix.settings import SettingsWithSidebar
 from kivy.uix.settings import SettingsWithTabbedPanel
+from threading import Lock
 
 import os
 import string
@@ -15,15 +16,6 @@ import random
 import mangaViewDefines
 import MangaBackGroundDownloader
 
-#data = [str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))) for i in range(1000, 1020)]
-
-#cdata = [str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))) for i in range(100, 105)]
-
-#ddata = [{'text':str(i)+' '.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randint(5, 30))),
-#'mangaInfotext': 'Manga Info',
-#'chapterInfotext': 'Chapter Info',
-#'mangaProgress': 40,
-#'chapterProgress': 95} for i in range(100, 105)]
 
 mangaDownloaderInstance = None
 
@@ -31,6 +23,8 @@ mangaDownloaderInstance = None
 class MangaDownloader(TabbedPanel):
 
     mangaBackGroundDownloader = None
+
+    downloadUILock = Lock()
 
     downloadMangaChapters = {}
 
@@ -177,43 +171,50 @@ class MangaDownloader(TabbedPanel):
         self.ids.mangasScreenManager.current = 'ChapterList'
 
     def downloadChapters(self, instance):
-        downloadSessionId = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20))
 
-        while self.downloadingMangasIds.get(downloadSessionId, None) is not None:
+        with self.downloadUILock:
             downloadSessionId = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20))
 
-        urls = self.mangaBackGroundDownloader.loadDownloadChapters(self.currentMangaSite,
-                                                                              self.toDownloadManga,
-                                                                              self.toDownloadUrls,
-                                                                              downloadSessionId,
-                                                                              self.downloadingProgress)
+            while self.downloadingMangasIds.get(downloadSessionId, None) is not None:
+                downloadSessionId = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20))
 
-        if len(urls) > 0:
-            #Update downloading data with this instance. Pass the unique id for it
-            downloadSession = {}
+            urls = self.mangaBackGroundDownloader.loadDownloadChapters(self.currentMangaSite,
+                                                                                  self.toDownloadManga,
+                                                                                  self.toDownloadUrls,
+                                                                                  downloadSessionId,
+                                                                                  self.downloadingProgress)
 
-            downloadSession['text'] = self.currentMangaSite
-            downloadSession['mangaInfotext'] = self.toDownloadManga + " 1/" + str(len(urls))
-            downloadSession['chapterInfotext'] = ""
-            downloadSession['mangaProgress'] = 0
-            downloadSession['chapterProgress'] = 0
-            downloadSession['mangaName'] = self.toDownloadManga
-            downloadSession['numberOfChapters'] = len(urls)
+            if len(urls) > 0:
+                #Update downloading data with this instance. Pass the unique id for it
+                downloadSession = {}
 
-            downloadSession['downloadSessionId'] = downloadSessionId
+                downloadSession['text'] = self.currentMangaSite
+                downloadSession['mangaInfotext'] = self.toDownloadManga + " 1/" + str(len(urls))
+                downloadSession['chapterInfotext'] = ""
+                downloadSession['mangaProgress'] = 0
+                downloadSession['chapterProgress'] = 0
 
-            #self.ddata.append(downloadSession)
-            #self.downloadingMangasIds[downloadSessionId] = len(self.ddata) - 1
+                downloadSession['mangaName'] = self.toDownloadManga
+                downloadSession['numberOfChapters'] = len(urls)
 
-            self.downloadlist_adapter.data.append(downloadSession)
-            self.downloadingMangasIds[downloadSessionId] = len(self.downloadlist_adapter.data) - 1
+                downloadSession['downloadSessionId'] = downloadSessionId
 
-            self.ids.downloadList.populate()
+                #self.ddata.append(downloadSession)
+                #self.downloadingMangasIds[downloadSessionId] = len(self.ddata) - 1
 
-            self.mangaBackGroundDownloader.startResumeDownloadChapters(downloadSessionId)
+                self.downloadlist_adapter.data.append(downloadSession)
+                self.downloadingMangasIds[downloadSessionId] = len(self.downloadlist_adapter.data) - 1
 
-    def downloadingProgress(self, downloadSessionId, chapterProgress):
-        pass
+                self.ids.downloadList.populate()
+
+                self.mangaBackGroundDownloader.startResumeDownloadChapters(downloadSessionId)
+
+    def downloadingProgress(self, downloadSessionId, chapterProgress, chapterInfo, sessionProgress, mangaInfo, sessionFail):
+        with self.downloadUILock:
+            index = self.downloadingMangasIds[downloadSessionId]
+            if sessionFail:
+                pass
+
 
     def on_chapterselect_checkbox_active(self, checkbox, value):
         chapterInfo = {}

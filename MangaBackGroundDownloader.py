@@ -5,6 +5,7 @@ import MangaURLDownloader
 
 from MangaStreamDownloader import MangaStreamDownloader
 
+#TODO - thread lock might be needed here
 
 class MangaBackGroundDownloader():
 
@@ -113,7 +114,9 @@ class MangaBackGroundDownloader():
 
     def downloadSessionComplete(self, downloadSessionId):
         # Remove the session on complete
-        if self.downloadRequestInfo.get(downloadSessionId, None) is not None:
+        downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
+        if downloadRequest is not None:
+            func = downloadRequest['func']
             self.downloadRequestInfo.pop(downloadSessionId)
 
     def downloadSessionFailed(self, downloadSessionId):
@@ -135,7 +138,9 @@ class MangaBackGroundDownloader():
             fileCBZ = folder+'.cbz'
 
             # Delete the cbz first
-            os.remove(fileCBZ)
+            if os.path.isfile(fileCBZ):
+                os.remove(fileCBZ)
+
             cbzf = zipfile.ZipFile(fileCBZ, 'w')
             self.cbzdir(folder, cbzf)
             cbzf.close()

@@ -291,6 +291,12 @@ class MangaStreamDownloader(MangaConfig):
 
     def chapterDownloadSessionComplete(self, downloadSessionId):
         print "Chapter Download Complete"
+
+        chapterProgressInfo = None
+        progressInfo = None
+        chapterDownloadSessionComplete = None
+        downloadSessionComplete = None
+
         with self.sessionLock:
             if downloadSessionId is not None:
                 downloadSession = self.downloadSessions.get(downloadSessionId, None)
@@ -320,7 +326,6 @@ class MangaStreamDownloader(MangaConfig):
                     percent = 100
 
                     # Check if next chapter to be downloaded. If so then start it
-                    downloadSessionComplete = None
                     
                     if currentChapter < len(downloadSession['chapterURLs']):
                         percent = 0
@@ -344,25 +349,32 @@ class MangaStreamDownloader(MangaConfig):
                     else:
                         downloadSessionComplete = downloadSession['downloadSessionComplete']
 
-
                     progressInfo = downloadSession['progressInfo']
                     chapterProgressInfo = downloadSession['chapterProgressInfo']
                     chapterDownloadSessionComplete = downloadSession['chapterDownloadSessionComplete']
 
                     self.downloadSessions[downloadSessionId] = downloadSession
 
-                    chapterProgressInfo(downloadSessionId, percent)
-                    progressInfo(downloadSessionId, totalProgress)
-                    chapterDownloadSessionComplete(downloadSessionId, currentChapterFolder)
+        if chapterProgressInfo is not None:
+            chapterProgressInfo(downloadSessionId, percent)
 
-                    if downloadSessionComplete is not None:
-                        downloadSessionComplete(downloadSessionId)
+        if progressInfo is not None:
+            progressInfo(downloadSessionId, totalProgress)
+
+        if chapterDownloadSessionComplete is not None:
+            chapterDownloadSessionComplete(downloadSessionId, currentChapterFolder)
+
+        if downloadSessionComplete is not None:
+            downloadSessionComplete(downloadSessionId)
 
     def chapterDownloadSessionFailed(self, downloadSessionId):
+        downloadSessionFailed = None
         with self.sessionLock:
             if downloadSessionId is not None:
                 downloadSession = self.downloadSessions.get(downloadSessionId, None)
                 if downloadSession is not None:
                     downloadSessionFailed = downloadSession['downloadSessionFailed']
                     downloadSession['downloadInProgress'] = False
-                    downloadSessionFailed(downloadSessionId)
+
+        if downloadSessionFailed is not None:
+            downloadSessionFailed(downloadSessionId)

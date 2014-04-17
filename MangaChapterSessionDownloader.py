@@ -70,18 +70,24 @@ class MangaChapterSessionDownloader():
                 self.downloadingUrls[response] = url
                 self.parallelUrlDownloads -= 1
 
-            # This can be done outside lock too.
-            # But on calling callback within lock will make sure that UI updates happen
-            # first and then next downloads resume
-            print "To Download or downloading ... " + str(totalToDownloadCount)
-            if totalToDownloadCount == 0:
-                self.downloadSessionComplete(self.downloadSessionId)
-            else:
-                self.progressInfo(self.downloadSessionId, downloadCompletedCount, percent)
+            downloadSessionComplete = self.downloadSessionComplete
+            progressInfo = self.progressInfo
+            failDownload = None
+
+            downloadSessionId = self.downloadSessionId
 
             if self.failureCount <= 0:
                 self.downloadInProgress = False
-                self.failedDownload(self.downloadSessionId)
+                failDownload = self.failedDownload
+
+        print "To Download or downloading ... " + str(totalToDownloadCount)
+        if totalToDownloadCount == 0:
+            downloadSessionComplete(self.downloadSessionId)
+        else:
+            progressInfo(self.downloadSessionId, downloadCompletedCount, percent)
+
+        if failDownload is not None:
+            failDownload(downloadSessionId)
 
     def urlProgressInfo(self, response):
         # Send a proper progress info to the requester
