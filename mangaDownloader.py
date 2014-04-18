@@ -278,7 +278,8 @@ class MangaDownloaderApp(App):
 
         config.setdefaults('manga', {
             'download_folder': os.getcwd(),
-            'download_as': "CBZ"
+            'download_as': "CBZ",
+            'delete_folder': False
         })
 
     def on_start(self):
