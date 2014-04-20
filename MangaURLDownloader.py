@@ -66,6 +66,11 @@ class MangaURLDownloader(threading.Thread):
             print "could not open the url due to timeout " + self.url
             self.response = None
             self.failed = True
+        except Exception as e:
+            print "Generic Exception " + self.url
+            print e
+            self.response = None
+            self.failed = True
 
         if self.response is not None:
             result = ""

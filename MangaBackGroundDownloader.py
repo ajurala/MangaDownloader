@@ -114,10 +114,8 @@ class MangaBackGroundDownloader():
         downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
 
         if downloadRequest is not None:
-            print "progressInfo abt a session is here ..."
             func = downloadRequest['func']
             func(downloadSessionId, mangaInfo=mangaInfo, sessionProgress=percent)
-            print "progressInfo abt a session is completed ..."
 
     def downloadSessionComplete(self, downloadSessionId):
         # Remove the session on complete

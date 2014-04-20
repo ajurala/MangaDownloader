@@ -10,7 +10,7 @@ def mkdir_p(path):
             pass
         else: raise
 
-def cbzdir(self, path, cbz):
+def cbzdir(path, cbz):
     for root, dirs, files in os.walk(path):
         for file in files:
             cbzFileItem = os.path.join(root, file)

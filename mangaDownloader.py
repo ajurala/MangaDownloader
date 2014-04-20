@@ -213,10 +213,7 @@ class MangaDownloader(TabbedPanel):
                 self.mangaBackGroundDownloader.startResumeDownloadChapters(downloadSessionId)
 
     def downloadingProgress(self, downloadSessionId, chapterProgress=None, chapterInfo=None, sessionProgress=None, mangaInfo=None, sessionFail=False):
-
-        print "A Progress call"
         with self.downloadUILock:
-            print "A Progress call - got the lock"
             #index = self.downloadingMangasIds[downloadSessionId]
             #downloadSession = self.downloadlist_adapter.data[index]
 
@@ -242,9 +239,7 @@ class MangaDownloader(TabbedPanel):
             if sessionProgress is not None:
                 downloadSession['mangaProgress'] = sessionProgress
 
-            print "A Progress call - populate the list"
             self.ids.downloadList.populate()
-        print "A Progress call - complete"
 
     def on_chapterselect_checkbox_active(self, checkbox, value):
         chapterInfo = {}
