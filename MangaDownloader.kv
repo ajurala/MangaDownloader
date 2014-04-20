@@ -28,6 +28,12 @@
         text: 'Mangas'
         BoxLayout:
             orientation: 'vertical'
+            canvas.before:
+                Color:
+                    rgba: 0, 0, 0, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
             BoxLayout:
                 Splitter:
                     sizable_from: 'right'
@@ -60,6 +66,13 @@
                         halign: 'left'
                         valign: 'top'
                         size_hint: 1, 0.2
+
+                        canvas.before:
+                            Color:
+                                rgba: 0.2, 0.2, 0.2, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
                         #text_size: self.size
                     ScreenManager:
                         id: mangasScreenManager
@@ -88,6 +101,7 @@
                                         adapter: root.chapterlist_adapter
                                 BoxLayout:
                                     size_hint: 1, 0.1
+                                    padding: 2, 4, 2, 2
                                     Button:
                                         id: selectNew
                                         text: 'Select New'
@@ -102,11 +116,18 @@
                                         text: 'Unselect All'
                                 BoxLayout:
                                     size_hint: 1, 0.2
+                                    padding: 2, 0, 2, 0
                                     Button:
                                         id: downloadChapters
                                         text: 'Download Chapters'
             Label:
                 id: status
+                canvas.before:
+                    Color:
+                        rgba: 0, 0, 0, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
                 size_hint_y: None
                 height: 25
                 text: 'Status:'
@@ -119,6 +140,12 @@
         text: 'Downloads'
         BoxLayout:
             orientation: 'vertical'
+            canvas.before:
+                Color:
+                    rgba: 0, 0, 0, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
             BoxLayout:
                 size_hint: 1, None
                 DownTabButton:
