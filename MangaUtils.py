@@ -9,3 +9,9 @@ def mkdir_p(path):
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
         else: raise
+
+def cbzdir(self, path, cbz):
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            cbzFileItem = os.path.join(root, file)
+            cbz.write(cbzFileItem, os.path.relpath(cbzFileItem, os.path.join(path, '.')))

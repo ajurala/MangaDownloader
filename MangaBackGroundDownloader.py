@@ -2,6 +2,7 @@ import os
 import shutil
 import zipfile
 import MangaURLDownloader
+import MangaUtils
 
 from MangaStreamDownloader import MangaStreamDownloader
 
@@ -109,14 +110,22 @@ class MangaBackGroundDownloader():
             #Start resume to the download now
             mangaObj.startResumeDownloadChapters(downloadSessionId)
 
-    def progressInfo(self, downloadSessionId, percent):
-        pass
+    def progressInfo(self, downloadSessionId, percent=0, mangaInfo=None):
+        downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
+
+        if downloadRequest is not None:
+            print "progressInfo abt a session is here ..."
+            func = downloadRequest['func']
+            func(downloadSessionId, mangaInfo=mangaInfo, sessionProgress=percent)
+            print "progressInfo abt a session is completed ..."
 
     def downloadSessionComplete(self, downloadSessionId):
         # Remove the session on complete
+        mangaInfo = "All Chapters have been downloaded"
         downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
         if downloadRequest is not None:
             func = downloadRequest['func']
+            func(downloadSessionId, mangaInfo=mangaInfo)
             self.downloadRequestInfo.pop(downloadSessionId)
 
     def downloadSessionFailed(self, downloadSessionId, currentChapterName):
@@ -127,10 +136,19 @@ class MangaBackGroundDownloader():
             func = downloadRequest['func']
             func(downloadSessionId, chapterInfo=currentChapterName, sessionFail=True)
 
-    def chapterProgressInfo(self, downloadSessionId, percent):
-        pass
+    def chapterProgressInfo(self, downloadSessionId, currentChapterName, percent):
+        downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
 
-    def chapterDownloadSessionComplete(self, downloadSessionId, folder):
+        if downloadRequest is not None:
+            func = downloadRequest['func']
+            func(downloadSessionId, chapterInfo=currentChapterName, chapterProgress=percent)
+
+    def chapterDownloadSessionComplete(self, downloadSessionId, currentChapterName, folder):
+
+        downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
+        if downloadRequest is not None:
+            func = downloadRequest['func']
+            func(downloadSessionId, chapterInfo=currentChapterName)
 
         if self.config.get('manga', 'download_as') == "CBZ":
             # Zip the folder and create the cbz
@@ -141,7 +159,7 @@ class MangaBackGroundDownloader():
                 os.remove(fileCBZ)
 
             cbzf = zipfile.ZipFile(fileCBZ, 'w')
-            self.cbzdir(folder, cbzf)
+            MangaUtils.cbzdir(folder, cbzf)
             cbzf.close()
 
             delete_folder = self.config.get('manga', 'delete_folder')
@@ -154,8 +172,3 @@ class MangaBackGroundDownloader():
                     print "Could not remove folder "+ folder
                     print err
 
-    def cbzdir(self, path, cbz):
-        for root, dirs, files in os.walk(path):
-            for file in files:
-                cbzFileItem = os.path.join(root, file)
-                cbz.write(cbzFileItem, os.path.relpath(cbzFileItem, os.path.join(path, '.')))
