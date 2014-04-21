@@ -235,6 +235,7 @@ class MangaDownloader(TabbedPanel):
                 downloadSession['mangaInfotext'] = mangaInfo
 
             if sessionProgress is not None:
+                # print "Weeeeeee "+ str(sessionProgress)
                 downloadSession['mangaProgress'] = sessionProgress
 
             self.forceRefreshListView(self.ids.downloadList)

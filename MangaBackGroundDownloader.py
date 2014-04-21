@@ -134,7 +134,7 @@ class MangaBackGroundDownloader():
             func = downloadRequest['func']
             func(downloadSessionId, chapterInfo=currentChapterName, sessionFail=True)
 
-    def chapterProgressInfo(self, downloadSessionId, currentChapterName, percent):
+    def chapterProgressInfo(self, downloadSessionId, currentChapterName, percent=0):
         downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
 
         if downloadRequest is not None:
