@@ -4,6 +4,7 @@ from threading import Thread
 
 from StringIO import StringIO
 
+import MangaUtils
 import MangaURLDownloader
 import os
 
@@ -280,7 +281,7 @@ class MangaStreamDownloader(MangaConfig):
                     else:
                         # Start the session
                         currentChapter = 0
-                        folder = os.path.join(downloadSession['folder'], downloadSession['chapterNames'][currentChapter])
+                        folder = os.path.join(downloadSession['folder'], MangaUtils.removeInvalidCharacters(downloadSession['chapterNames'][currentChapter]))
 
                         downloadSession['currentChapter'] = currentChapter
 

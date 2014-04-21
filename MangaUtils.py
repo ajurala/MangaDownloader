@@ -10,6 +10,11 @@ def mkdir_p(path):
             pass
         else: raise
 
+def removeInvalidCharacters(path):
+    invalidChars = "<>:\"/\\|?*"
+
+    return ''.join(c for c in path if c not in invalidChars)
+
 def cbzdir(path, cbz):
     for root, dirs, files in os.walk(path):
         for file in files:

@@ -8,6 +8,7 @@ from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.adapters.listadapter import ListAdapter
 from kivy.uix.settings import SettingsWithSidebar
 from kivy.utils import escape_markup
+
 from threading import Lock
 
 import os
@@ -33,7 +34,6 @@ class MangaDownloader(TabbedPanel):
 
     downloadingMangasIds = {}
     downloadingMangasSelected = []
-    ddata = []
 
     currentMangaSite = "MangaStream"
 
@@ -202,13 +202,10 @@ class MangaDownloader(TabbedPanel):
                 downloadSession['downloadSessionId'] = downloadSessionId
                 downloadSession['downloadCompleted'] = False
 
-                #self.ddata.append(downloadSession)
-                #self.downloadingMangasIds[downloadSessionId] = len(self.ddata) - 1
-
                 self.downloadlist_adapter.data.append(downloadSession)
                 self.downloadingMangasIds[downloadSessionId] = self.downloadlist_adapter.data[-1] #len(self.downloadlist_adapter.data) - 1
 
-                self.ids.downloadList.populate()
+                self.forceRefreshListView(self.ids.downloadList)
 
                 self.mangaBackGroundDownloader.startResumeDownloadChapters(downloadSessionId)
 
@@ -224,7 +221,8 @@ class MangaDownloader(TabbedPanel):
                                   escape_markup(" Try again by clicking 'Resume' button") + "[/b][/color]"
 
                 downloadSession['chapterInfotext'] = chapterInfotext
-                self.ids.downloadList.populate()
+                self.forceRefreshListView(self.ids.downloadList)
+
                 return
 
             if chapterProgress is not None:
@@ -239,7 +237,11 @@ class MangaDownloader(TabbedPanel):
             if sessionProgress is not None:
                 downloadSession['mangaProgress'] = sessionProgress
 
-            self.ids.downloadList.populate()
+            self.forceRefreshListView(self.ids.downloadList)
+
+    def forceRefreshListView(self, listview):
+        listview.adapter.update_for_new_data()
+        listview._trigger_reset_populate()
 
     def on_chapterselect_checkbox_active(self, checkbox, value):
         chapterInfo = {}
