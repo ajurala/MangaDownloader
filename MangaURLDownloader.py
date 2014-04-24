@@ -19,7 +19,7 @@ chunk_size = 8192
 
 class MangaURLDownloader(threading.Thread):
 
-    def __init__(self, requestId, url, finishCallback, folder, progressCallback, failDownload):
+    def __init__(self, requestId, url, finishCallback, folder, progressCallback, failDownload, file):
         threading.Thread.__init__(self)
 
         urlThreadInfo = {}
@@ -35,6 +35,7 @@ class MangaURLDownloader(threading.Thread):
         self.url = url
         self.requestId = requestId
         self.stopDownload = False
+        self.file = file
 
         self.semaphore = threading.BoundedSemaphore()
 
@@ -51,6 +52,7 @@ class MangaURLDownloader(threading.Thread):
         folder = self.folder
         progressCallback = self.progressCallback
         url = self.url
+        file = self.file
         try:
             user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
             req = urllib2.Request(self.url, headers={'User-Agent': user_agent})
@@ -83,9 +85,11 @@ class MangaURLDownloader(threading.Thread):
             fileNotDownloaded = True
             #Open file if url response to be saved in file
             if folder is not None:
-                urlSplitList = urlparse.urlsplit(url)
-                urlPath = urlSplitList[2]
-                file = urlPath.split('/')[-1]
+                if file is not None:
+                    urlSplitList = urlparse.urlsplit(url)
+                    urlPath = urlSplitList[2]
+                    file = urlPath.split('/')[-1]
+
                 file = os.path.join(folder, file)
 
                 # Check for file size ...
@@ -158,7 +162,7 @@ class MangaURL():
     def geturl(self):
         return self.url
 
-def downloadUrl(url, finishCallback, folder=None, progressCallback=None, failDownload=None):
+def downloadUrl(url, finishCallback, folder=None, progressCallback=None, failDownload=None, file=None):
     requestId = None
 
     if finishCallback is not None:
@@ -169,7 +173,7 @@ def downloadUrl(url, finishCallback, folder=None, progressCallback=None, failDow
             requestId = MangaURL(url)
 
             # Start a thread which saves info
-            thread = MangaURLDownloader(requestId, url, finishCallback, folder, progressCallback, failDownload)
+            thread = MangaURLDownloader(requestId, url, finishCallback, folder, progressCallback, failDownload, file)
 
             thread.setDaemon(True)
             thread.start()
