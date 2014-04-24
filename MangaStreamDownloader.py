@@ -198,7 +198,7 @@ class MangaStreamDownloader(MangaConfig):
                 currentChapterName = downloadSession['chapterNames'][currentChapter]
 
         if chapterProgress is not None:
-            chapterInfo = "Parsing " + currentChapterName
+            chapterInfo = "Parsing " + currentChapterName + " (1)"
 
             # Update UI in a thread
             t = Thread(target=self.updateStartParse, args=(chapterProgress, downloadSessionId, chapterInfo))
@@ -218,6 +218,7 @@ class MangaStreamDownloader(MangaConfig):
         chapterProgress = None
         currentChapterName = ""
         semaphore = None
+        parsingChapterPageNumber = 0
         with self.sessionLock:
             downloadSessionId = self.downloadChapterPageInfo.get(req, None)
             if downloadSessionId is not None:
@@ -242,6 +243,8 @@ class MangaStreamDownloader(MangaConfig):
                     imageURL  = node.get('src')
 
                     downloadChapterSessionInfo['imagesURLs'].append(imageURL)
+                    parsingChapterPageNumber = len(downloadChapterSessionInfo['imagesURLs']) + 1
+
                     downloadSession['downloadChapterSessionsInfo'][currentChapter] = downloadChapterSessionInfo
 
                     downloadSession['totalImages'] += 1
@@ -273,6 +276,8 @@ class MangaStreamDownloader(MangaConfig):
 
                             downloadSession['downloadChapterSessionsInfo'].append(downloadChapterSessionInfo)
                             downloadSession['currentChapter'] = currentChapter
+
+                            parsingChapterPageNumber = 1
 
                 semaphore = downloadSession['semaphore']
                 self.downloadSessions[downloadSessionId] = downloadSession
@@ -328,9 +333,8 @@ class MangaStreamDownloader(MangaConfig):
 
             self.downloadChapterPageInfo.pop(req)
 
-
         if chapterProgress is not None:
-            chapterInfo = "Parsing " + currentChapterName
+            chapterInfo = "Parsing " + currentChapterName + " (" + str(parsingChapterPageNumber) + ")"
             chapterProgress(downloadSessionId, currentChapterName=chapterInfo)
 
     def chapterProgressInfo(self, downloadSessionId, downloadedCount, percent):

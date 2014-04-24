@@ -229,7 +229,7 @@ class MangaDownloader(TabbedPanel):
                 downloadSession = {}
 
                 downloadSession['text'] = self.currentMangaSite
-                downloadSession['mangaInfotext'] = self.toDownloadManga + " 1/" + str(len(urls))
+                downloadSession['mangaInfotext'] = self.toDownloadManga + " 0/" + str(len(urls))
                 downloadSession['chapterInfotext'] = ""
                 downloadSession['mangaProgress'] = 0
                 downloadSession['chapterProgress'] = 0

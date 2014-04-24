@@ -87,6 +87,7 @@ class MangaBackGroundDownloader():
             downloadRequest['manga'] = manga
             downloadRequest['sessionPercent'] = 0
             downloadRequest['chapterSessionPercent'] = 0
+            downloadRequest['totalDownloadedChapters'] = 0
 
             #The manga site will return the urls
             urls = mangaObj.loadDownloadChapters(urlsInfo, downloadSessionId,
@@ -94,7 +95,9 @@ class MangaBackGroundDownloader():
                                                     self.chapterProgressInfo, self.chapterDownloadSessionComplete,
                                                     folder)
 
-            if len(urls) > 0:
+            totalChapters = len(urls)
+            if totalChapters > 0:
+                downloadRequest['totalChapters'] = totalChapters
                 self.downloadRequestInfo[downloadSessionId] = downloadRequest
 
             return urls
@@ -146,7 +149,9 @@ class MangaBackGroundDownloader():
         downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
         if downloadRequest is not None:
             func = downloadRequest['func']
-            func(downloadSessionId, chapterInfo=currentChapterName)
+            downloadRequest['currentChapterNumber'] += 1
+            mangaInfo = downloadRequest['manga'] + " " + str(downloadRequest['totalDownloadedChapters']) + "/" + str(downloadRequest['totalChapters'])
+            func(downloadSessionId, mangaInfo=mangaInfo, chapterInfo=currentChapterName)
 
         if self.config.get('manga', 'download_as') == "CBZ":
             # Zip the folder and create the cbz
