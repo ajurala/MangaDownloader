@@ -82,7 +82,8 @@ class MangaDownloader(TabbedPanel):
     cargs_converter = lambda row_index, rec: {
         'text': rec['name'],
         'on_active': on_chapterselect_checkbox_active,
-        'url': rec['url']
+        'url': rec['url'],
+        'active': rec['checked']
     }
 
     chapterlist_adapter = ListAdapter(data=[],
@@ -128,8 +129,10 @@ class MangaDownloader(TabbedPanel):
         self.ids.resumeDownloadSession.bind(on_press=self.pauseCancelDownloads)
         self.ids.resumeAllDownloadSession.bind(on_press=self.pauseCancelDownloads)
 
-        self.ids.selectAllDownloadSession.bind(on_press=self.selectUnSelectDownloads)
-        self.ids.clearAllDownloadSession.bind(on_press=self.selectUnSelectDownloads)
+        self.ids.selectAllDownloadSession.bind(on_press=self.selectUnSelectList)
+        self.ids.clearAllDownloadSession.bind(on_press=self.selectUnSelectList)
+        self.ids.selectAllChapters.bind(on_press=self.selectUnSelectList)
+        self.ids.clearAllChapters.bind(on_press=self.selectUnSelectList)
 
         self.init = True
         self.mangaBackGroundDownloader.getMangaList(self.currentMangaSite, self.updateMangaList)
@@ -203,6 +206,9 @@ class MangaDownloader(TabbedPanel):
                 self.mangaBackGroundDownloader.downloadChapterList(self.currentMangaSite, selected_object.url, self.updateChapterList)
 
     def updateChapterList(self, mangaSite, chapterList):
+        for chapter in chapterList:
+            chapter['checked'] = False
+
         data = chapterList
         self.chapterlist_adapter.data = data
         self.ids.chapterList.populate()
@@ -371,21 +377,39 @@ class MangaDownloader(TabbedPanel):
         downloadSessionIdsList = self.downloadingMangasIds.keys()
         self.resumeDownloads(downloadSessionIdsList)
 
-    def selectUnSelectDownloads(self, instance):
-        if instance == self.ids.clearAllDownloadSession:
-            for downloadSession in self.downloadingMangasIds.values():
-                with self.downloadUILock:
-                    downloadSession['checked'] = False
-            del self.downloadingMangasSelected[:]
-        elif instance == self.ids.selectAllDownloadSession:
+    def selectUnSelectList(self, instance):
+        if instance == self.ids.selectAllDownloadSession:
             self.downloadingMangasSelected = list(self.downloadingMangasIds.keys())
             for downloadSessionId in self.downloadingMangasSelected:
                 with self.downloadUILock:
                     downloadSession = self.downloadingMangasIds[downloadSessionId]
                     downloadSession['checked'] = True
 
+            self.forceRefreshListView(self.ids.downloadList)
 
-        self.forceRefreshListView(self.ids.downloadList)
+        elif instance == self.ids.clearAllDownloadSession:
+            for downloadSession in self.downloadingMangasIds.values():
+                with self.downloadUILock:
+                    downloadSession['checked'] = False
+
+            del self.downloadingMangasSelected[:]
+
+            self.forceRefreshListView(self.ids.downloadList)
+
+        elif instance == self.ids.selectAllChapters:
+            self.toDownloadUrls = list(self.chapterlist_adapter.data)
+            for chapter in self.chapterlist_adapter.data:
+                chapter['checked'] = True
+
+            self.forceRefreshListView(self.ids.chapterList)
+
+        elif instance == self.ids.clearAllChapters:
+            for chapter in self.chapterlist_adapter.data:
+                chapter['checked'] = False
+
+            del self.toDownloadUrls[:]
+
+            self.forceRefreshListView(self.ids.chapterList)
 
 
 class MangaDownloaderApp(App):
