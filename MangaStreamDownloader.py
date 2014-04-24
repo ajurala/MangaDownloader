@@ -1,7 +1,7 @@
 from lxml import etree
 from threading import Lock
 from threading import Thread
-
+from threading import BoundedSemaphore
 from StringIO import StringIO
 
 import MangaUtils
@@ -91,7 +91,7 @@ class MangaStreamDownloader(MangaConfig):
 
             self.requestPending = False
 
-    def stopPendingChapterRequests():
+    def stopPendingChapterRequests(self):
         # This function might be needed later
         pass
 
@@ -148,6 +148,8 @@ class MangaStreamDownloader(MangaConfig):
             if len(temp_urls) > 0:
                 downloadSession = {}
                 downloadSession['downloadInProgress'] = False
+                downloadSession['downloadPaused'] = False
+                downloadSession['downloadComplete'] = False
                 downloadSession['progressInfo'] = progressInfo
                 downloadSession['downloadSessionComplete'] = downloadSessionComplete
                 downloadSession['chapterProgressInfo'] = chapterProgressInfo
@@ -160,18 +162,19 @@ class MangaStreamDownloader(MangaConfig):
                 downloadSession['downloadChapterSessionsInfo'] = []
                 downloadSession['totalImages'] = 0
                 downloadSession['totalDownloadedImages'] = 0
+                downloadSession['semaphore'] = BoundedSemaphore()
 
                 self.downloadSessions[downloadSessionId] = downloadSession
 
         return temp_urls
 
-    def startResumeDownloadChapters(self, downloadSessionId):
+    def startDownloadChapters(self, downloadSessionId):
         progressInfo = None
         currentChapterName = ""
 
         with self.sessionLock:
             downloadSession = self.downloadSessions.get(downloadSessionId, None)
-            if downloadSession is not None and not downloadSession['downloadInProgress']:
+            if downloadSession is not None and not downloadSession['downloadInProgress'] and not downloadSession['downloadComplete']:
 
                 downloadSession['downloadInProgress'] = True
 
@@ -214,10 +217,10 @@ class MangaStreamDownloader(MangaConfig):
     def parsedChapterPage(self, req, result):
         progressInfo = None
         currentChapterName = ""
+        semaphore = None
         with self.sessionLock:
             downloadSessionId = self.downloadChapterPageInfo.get(req, None)
             if downloadSessionId is not None:
-                self.downloadChapterPageInfo.pop(req)
                 downloadSession = self.downloadSessions.get(downloadSessionId, None)
                 if downloadSession is not None:
                     currentChapter = downloadSession['currentChapter']
@@ -271,10 +274,26 @@ class MangaStreamDownloader(MangaConfig):
                             downloadSession['downloadChapterSessionsInfo'].append(downloadChapterSessionInfo)
                             downloadSession['currentChapter'] = currentChapter
 
-                    if url is not None:
-                        req = MangaURLDownloader.downloadUrl(url, self.parsedChapterPage, failDownload=self.parseChapterPageFailed)
+                semaphore = downloadSession['semaphore']
+                self.downloadSessions[downloadSessionId] = downloadSession
 
-                        self.downloadChapterPageInfo[req] = downloadSessionId
+        # If semaphore not acquired then it pauses the thread automatically
+        if semaphore:
+            with semaphore:
+                pass
+        else:
+            return
+
+        with self.sessionLock:
+            downloadSessionId = self.downloadChapterPageInfo.get(req, None)
+            if downloadSessionId is not None:
+                downloadSession = self.downloadSessions.get(downloadSessionId, None)
+                if downloadSession is not None:
+
+                    if url is not None:
+                        newreq = MangaURLDownloader.downloadUrl(url, self.parsedChapterPage, failDownload=self.parseChapterPageFailed)
+
+                        self.downloadChapterPageInfo[newreq] = downloadSessionId
 
                         progressInfo = downloadSession['progressInfo']
                         currentChapterName = downloadSession['chapterNames'][currentChapter]
@@ -297,9 +316,11 @@ class MangaStreamDownloader(MangaConfig):
                         downloadChapterSessionInfo['chapterSessionDownloader'] = sessionDownloader
                         downloadSession['downloadChapterSessionsInfo'][currentChapter] = downloadChapterSessionInfo
 
-                        sessionDownloader.startResumeDownloadSession()
+                        sessionDownloader.startDownloadSession()
 
                 self.downloadSessions[downloadSessionId] = downloadSession
+
+            self.downloadChapterPageInfo.pop(req)
 
         if progressInfo is not None:
             mangaInfo = "Parsing " + currentChapterName
@@ -388,6 +409,7 @@ class MangaStreamDownloader(MangaConfig):
                         sessionDownloader.startResumeDownloadSession()
                     else:
                         downloadSessionComplete = downloadSession['downloadSessionComplete']
+                        downloadSession['downloadComplete'] = True
 
                     progressInfo = downloadSession['progressInfo']
                     chapterProgressInfo = downloadSession['chapterProgressInfo']
@@ -416,8 +438,43 @@ class MangaStreamDownloader(MangaConfig):
                 if downloadSession is not None:
                     downloadSessionFailed = downloadSession['downloadSessionFailed']
                     downloadSession['downloadInProgress'] = False
+                    downloadSession['downloadComplete'] = False
                     currentChapter = downloadSession['currentChapter']
                     currentChapterName = downloadSession['chapterNames'][currentChapter]
 
         if downloadSessionFailed is not None:
             downloadSessionFailed(downloadSessionId, currentChapterName)
+
+    def pauseDownloadChapters(self, downloadSessionId):
+
+        with self.sessionLock:
+            downloadSession = self.downloadSessions.get(downloadSessionId, None)
+            if downloadSession is not None and downloadSession['downloadInProgress'] and not downloadSession['downloadPaused'] and not downloadSession['downloadComplete']:
+                # Use semaphore for page parsing situation
+                # We can pause the parsing page too and need not worry abt this semaphore
+                # TODO - Thoughts on the above comment
+                semaphore = downloadSession['semaphore']
+                semaphore.acquire()
+                downloadSession['downloadPaused'] = True
+                currentChapter = downloadSession['currentChapter']
+                downloadChapterSessionInfo = downloadSession['downloadChapterSessionsInfo'][currentChapter]
+                sessionDownloader = downloadChapterSessionInfo['chapterSessionDownloader']
+
+                if sessionDownloader is not None:
+                    sessionDownloader.pauseDownloadSession()
+
+    def resumeDownloadChapters(self, downloadSessionId):
+
+        with self.sessionLock:
+            downloadSession = self.downloadSessions.get(downloadSessionId, None)
+            if downloadSession is not None and downloadSession['downloadInProgress'] and downloadSession['downloadPaused'] and not downloadSession['downloadComplete']:
+                # Use semaphore for page parsing situation
+                semaphore = downloadSession['semaphore']
+                semaphore.release()
+                downloadSession['downloadPaused'] = False
+                currentChapter = downloadSession['currentChapter']
+                downloadChapterSessionInfo = downloadSession['downloadChapterSessionsInfo'][currentChapter]
+                sessionDownloader = downloadChapterSessionInfo['chapterSessionDownloader']
+
+                if sessionDownloader is not None:
+                    sessionDownloader.resumeDownloadSession()

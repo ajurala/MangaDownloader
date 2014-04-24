@@ -8,6 +8,7 @@ from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.adapters.listadapter import ListAdapter
 from kivy.uix.settings import SettingsWithSidebar
 from kivy.utils import escape_markup
+from kivy.uix.popup import Popup
 
 from threading import Lock
 
@@ -20,6 +21,27 @@ import MangaBackGroundDownloader
 
 mangaDownloaderInstance = None
 
+class MangaPopup(Popup):
+    def __init__(self, title, message):
+        Popup.__init__(self)
+        self.auto_dismiss = False
+        self.title = title
+        self.ids.message.text = message
+
+        self.register_event_type('on_ok')
+
+    def on_press_dismiss(self, *args):
+        self.dismiss()
+        return False
+
+    def on_press_ok(self, *args):
+        #Call events
+        self.dispatch('on_ok')
+        self.dismiss()
+        return False
+
+    def on_ok(self):
+        pass
 
 class MangaDownloader(TabbedPanel):
 
@@ -33,6 +55,7 @@ class MangaDownloader(TabbedPanel):
     toDownloadManga = ""
 
     downloadingMangasIds = {}
+
     downloadingMangasSelected = []
 
     currentMangaSite = "MangaStream"
@@ -77,7 +100,9 @@ class MangaDownloader(TabbedPanel):
         'on_active': on_down_checkbox_active,
         'mangaName': rec['text'],
         'downloadSessionId': rec['downloadSessionId'],
-        'downloadCompleted': rec['downloadCompleted']
+        'downloadCompleted': rec['downloadCompleted'],
+        'disabled': rec['downloadCompleted'],
+        'active': rec['checked']
     }
 
     downloadlist_adapter = ListAdapter(data=[],
@@ -196,23 +221,24 @@ class MangaDownloader(TabbedPanel):
                 downloadSession['mangaProgress'] = 0
                 downloadSession['chapterProgress'] = 0
 
+                downloadSession['mangaSite'] = self.currentMangaSite
+
                 downloadSession['mangaName'] = self.toDownloadManga
                 downloadSession['numberOfChapters'] = len(urls)
 
                 downloadSession['downloadSessionId'] = downloadSessionId
                 downloadSession['downloadCompleted'] = False
+                downloadSession['checked'] = False
 
                 self.downloadlist_adapter.data.append(downloadSession)
                 self.downloadingMangasIds[downloadSessionId] = self.downloadlist_adapter.data[-1] #len(self.downloadlist_adapter.data) - 1
 
                 self.forceRefreshListView(self.ids.downloadList)
 
-                self.mangaBackGroundDownloader.startResumeDownloadChapters(downloadSessionId)
+                self.mangaBackGroundDownloader.startDownloadChapters(downloadSessionId)
 
-    def downloadingProgress(self, downloadSessionId, chapterProgress=None, chapterInfo=None, sessionProgress=None, mangaInfo=None, sessionFail=False):
+    def downloadingProgress(self, downloadSessionId, chapterProgress=None, chapterInfo=None, sessionProgress=None, mangaInfo=None, sessionFail=False, downloadCompleted=False):
         with self.downloadUILock:
-            #index = self.downloadingMangasIds[downloadSessionId]
-            #downloadSession = self.downloadlist_adapter.data[index]
 
             downloadSession = self.downloadingMangasIds[downloadSessionId]
             if sessionFail:
@@ -237,6 +263,10 @@ class MangaDownloader(TabbedPanel):
             if sessionProgress is not None:
                 downloadSession['mangaProgress'] = sessionProgress
 
+            #If it is not completed, then only accept any status change of complete
+            if not downloadSession['downloadCompleted']:
+                downloadSession['downloadCompleted'] = downloadCompleted
+
             self.forceRefreshListView(self.ids.downloadList)
 
     def forceRefreshListView(self, listview):
@@ -254,26 +284,64 @@ class MangaDownloader(TabbedPanel):
             self.toDownloadUrls.remove(chapterInfo)
 
     def on_down_checkbox_active(self, checkbox, value):
+        downloadSessionId = checkbox.downloadSessionId
+        downloadSession = self.downloadingMangasIds[downloadSessionId]
+
         if value:
-            self.downloadingMangasSelected.append(checkbox.downloadSessionId)
+            self.downloadingMangasSelected.append(downloadSessionId)
         else:
-            self.downloadingMangasSelected.remove(checkbox.downloadSessionId)
+            self.downloadingMangasSelected.remove(downloadSessionId)
+
+        downloadSession['checked'] = value
+
+        print self.downloadingMangasSelected
+
+    def pauseDownloads(self, downloadSessionIdsList):
+        for downloadSessionId in downloadSessionIdsList:
+            self.mangaBackGroundDownloader.pauseDownloadChapters(downloadSessionId)
+
+        print "Done pausing provided sessions"
+
+    def resumeDownloads(self, downloadSessionIdsList):
+        for downloadSessionId in downloadSessionIdsList:
+            self.mangaBackGroundDownloader.resumeDownloadChapters(downloadSessionId)
+
+    # TODO - Remove downloads - Needs some thought on that, so will do later
 
     def pauseCancelDownloads(self, instance):
         if instance == self.ids.pauseDownloadSession:
             print "pause called"
+            self.pauseDownloads(self.downloadingMangasSelected)
         elif instance == self.ids.pauseAllDownloadSession:
-            print "pause all called"
+            popup = MangaPopup('Pause all', 'Are you sure you want to pause all the downloads?')
+            popup.bind(on_ok=self.pause_all)
+            popup.open()
         elif instance == self.ids.removeDownloadSession:
             print "remove called"
         elif instance == self.ids.removeAllDownloadSession:
-            print "remove all called"
+            popup = MangaPopup('Remove all', 'Are you sure you want to remove all the downloads?')
+            popup.bind(on_ok=self.remove_all)
+            popup.open()
         elif instance == self.ids.resumeDownloadSession:
             print "resume called"
+            self.resumeDownloads(self.downloadingMangasSelected)
         elif instance == self.ids.resumeAllDownloadSession:
-            print "resume all called"
+            popup = MangaPopup('Resume all', 'Are you sure you want to resume all the downloads?')
+            popup.bind(on_ok=self.resume_all)
+            popup.open()
 
+    def pause_all(self, instance):
+        print "Yes we pause all"
+        downloadSessionIdsList = self.downloadingMangasIds.keys()
+        self.pauseDownloads(downloadSessionIdsList)
 
+    def remove_all(self, instance):
+        print "Yes we remove all"
+
+    def resume_all(self, instance):
+        print "Yes we resume all"
+        downloadSessionIdsList = self.downloadingMangasIds.keys()
+        self.resumeDownloads(downloadSessionIdsList)
 
 class MangaDownloaderApp(App):
     def build(self):

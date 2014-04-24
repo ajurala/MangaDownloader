@@ -182,7 +182,7 @@ def pauseDownload(requestId):
         urlThreadInfo = urlThreads.get(requestId, None)
 
     if urlThreadInfo is not None:
-        thread = urlThreads['thread']
+        thread = urlThreadInfo['thread']
 
         # Call to acquire should lock the resource and hence should pause the chunk request
         thread.semaphore.acquire()
@@ -196,7 +196,7 @@ def resumeDownload(requestId):
         urlThreadInfo = urlThreads.get(requestId, None)
 
     if urlThreadInfo is not None:
-        thread = urlThreads['thread']
+        thread = urlThreadInfo['thread']
         # Call to acquire should lock the resource and hence should pause the chunk request
         try:
             thread.semaphore.release()

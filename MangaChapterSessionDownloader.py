@@ -29,7 +29,7 @@ class MangaChapterSessionDownloader():
 
         self.downloadInProgress = False
 
-    def startResumeDownloadSession(self):
+    def startDownloadSession(self):
         #Start Or Resume the download
         #Once failure count reaches 0, do not continue with the session and wait for reinitialisation
         print "Start to download a chapter"
@@ -38,7 +38,8 @@ class MangaChapterSessionDownloader():
                 self.downloadInProgress = True
                 self.failureCount = 10
 
-                parallelUrlDownloads = self.parallelUrlDownloads
+                toDownloadUrlsCount = len(self.toDownloadUrls)
+                parallelUrlDownloads = self.parallelUrlDownloads if self.parallelUrlDownloads < toDownloadUrlsCount else toDownloadUrlsCount
 
                 for i in range(parallelUrlDownloads):
                     url = self.toDownloadUrls.pop(0)
@@ -103,3 +104,13 @@ class MangaChapterSessionDownloader():
 
             if url is not None:
                 self.downloadingUrls.pop(response)
+
+    def pauseDownloadSession(self):
+        with self.lock:
+            for response in self.downloadingUrls:
+                    MangaURLDownloader.pauseDownload(response)
+
+    def resumeDownloadSession(self):
+        with self.lock:
+            for response in self.downloadingUrls:
+                    MangaURLDownloader.pauseDownload(response)

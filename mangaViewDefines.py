@@ -67,6 +67,8 @@ Builder.load_string("""
     orientation: 'vertical'
     size_hint: 1, None
 
+    disabled: ctx.disabled
+
     BoxLayout:
         id: mangaDownloadInfo
         orientation: 'vertical'
@@ -84,6 +86,7 @@ Builder.load_string("""
             MangaDownloaderCheckBox:
                 id: mangaDownloadSelect
                 size_hint: None, 5
+                active: ctx.active
                 on_active: ctx['on_active'](*args)
                 mangaName: ctx.mangaName
                 downloadSessionId: ctx.downloadSessionId

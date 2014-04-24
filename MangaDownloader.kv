@@ -17,6 +17,32 @@
 <Separator@Label>:
     size_hint: 0.2, None
 
+<MangaPopup>:
+    title: 'Title here'
+    size_hint: 1.0, 0.6
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        Label:
+            id: message
+            text: 'Message here'
+            size_hint: 1.0, 1.0
+        BoxLayout:
+            spacing: 10
+            size_hint_x: 0.7
+            pos_hint: {'center_x': .5}
+            padding: 0, 0, 0, 15
+            Button:
+                text: 'Ok'
+                size_hint: 1.0, 0.3
+                on_press: root.on_press_ok()
+
+            Button:
+                text: 'Cancel'
+                size_hint: 1.0, 0.3
+                on_press: root.on_press_dismiss()
+
 <MangaDownloader>:
     mangaDownloader: mangaDownloader
     id: mangaDownloader

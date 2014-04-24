@@ -101,14 +101,14 @@ class MangaBackGroundDownloader():
 
         return []
 
-    def startResumeDownloadChapters(self, downloadSessionId):
+    def startDownloadChapters(self, downloadSessionId):
         downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
 
         if downloadRequest is not None:
             mangaObj = downloadRequest['mangaObj']
 
             #Start resume to the download now
-            mangaObj.startResumeDownloadChapters(downloadSessionId)
+            mangaObj.startDownloadChapters(downloadSessionId)
 
     def progressInfo(self, downloadSessionId, percent=0, mangaInfo=None):
         downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
@@ -123,7 +123,7 @@ class MangaBackGroundDownloader():
         downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
         if downloadRequest is not None:
             func = downloadRequest['func']
-            func(downloadSessionId, mangaInfo=mangaInfo)
+            func(downloadSessionId, mangaInfo=mangaInfo, downloadCompleted=True)
             self.downloadRequestInfo.pop(downloadSessionId)
 
     def downloadSessionFailed(self, downloadSessionId, currentChapterName):
@@ -169,4 +169,23 @@ class MangaBackGroundDownloader():
                 except OSError as err:
                     print "Could not remove folder "+ folder
                     print err
+
+    def pauseDownloadChapters(self, downloadSessionId):
+        downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
+
+        if downloadRequest is not None:
+            mangaObj = downloadRequest['mangaObj']
+
+            #Start resume to the download now
+            mangaObj.pauseDownloadChapters(downloadSessionId)
+
+    def resumeDownloadChapters(self, downloadSessionId):
+        downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
+
+        if downloadRequest is not None:
+            mangaObj = downloadRequest['mangaObj']
+
+            #Start resume to the download now
+            mangaObj.resumeDownloadChapters(downloadSessionId)
+
 
