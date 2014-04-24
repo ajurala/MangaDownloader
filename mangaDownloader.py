@@ -128,6 +128,7 @@ class MangaDownloader(TabbedPanel):
         self.ids.resumeDownloadSession.bind(on_press=self.pauseCancelDownloads)
         self.ids.resumeAllDownloadSession.bind(on_press=self.pauseCancelDownloads)
 
+        self.init = True
         self.mangaBackGroundDownloader.getMangaList(self.currentMangaSite, self.updateMangaList)
 
 
@@ -166,11 +167,17 @@ class MangaDownloader(TabbedPanel):
     def downloadMangaList(self, instance):
         #update Listview
         self.mangaBackGroundDownloader.downloadMangaList(self.currentMangaSite, self.updateMangaList)
+        self.ids.status.text = "Getting " + self.currentMangaSite + "'s manga list"
 
     def updateMangaList(self, mangaSite, mangaList):
         data = mangaList
         self.list_adapter.data = data
         self.ids.mangaList.populate()
+
+        if not self.init:
+            self.ids.status.text = "Updated " + self.currentMangaSite + "'s manga list"
+
+        self.init = False
 
     def mangaSelected(self, list_adapter, *args):
         if len(list_adapter.selection) == 1:
@@ -178,6 +185,7 @@ class MangaDownloader(TabbedPanel):
             selectedManga = selected_object.text
             if selectedManga != self.toDownloadManga:
                 self.ids.labelManga.text = "Selected Manga " + selectedManga
+                self.selectedManga = selectedManga
                 #Update the list of available chapters
 
                 #Show progress screen
@@ -186,7 +194,8 @@ class MangaDownloader(TabbedPanel):
 
                 self.toDownloadManga = selected_object.text
                 self.toDownloadUrls = []
-                print "Starting to download now ..."
+                #print "Starting to download now ..."
+                self.ids.status.text = "Getting " + self.selectedManga + "'s chapters"
 
                 self.mangaBackGroundDownloader.downloadChapterList(self.currentMangaSite, selected_object.url, self.updateChapterList)
 
@@ -196,6 +205,7 @@ class MangaDownloader(TabbedPanel):
         self.ids.chapterList.populate()
         #Show the list view screen now
         self.ids.mangasScreenManager.current = 'ChapterList'
+        self.ids.status.text = self.selectedManga + "'s chapters available for download"
 
     def downloadChapters(self, instance):
 
@@ -240,6 +250,8 @@ class MangaDownloader(TabbedPanel):
     def downloadingProgress(self, downloadSessionId, chapterProgress=None, chapterInfo=None, sessionProgress=None, mangaInfo=None, sessionFail=False, downloadCompleted=False):
         with self.downloadUILock:
 
+            statusText = ""
+
             downloadSession = self.downloadingMangasIds[downloadSessionId]
             if sessionFail:
                 chapterInfotext = "[b][color=ff0000]" + escape_markup("Failed to download Chapter ") + \
@@ -247,7 +259,8 @@ class MangaDownloader(TabbedPanel):
                                   escape_markup(" Try again by clicking 'Resume' button") + "[/b][/color]"
 
                 downloadSession['chapterInfotext'] = chapterInfotext
-                self.forceRefreshListView(self.ids.downloadList)
+                statusText = chapterInfotext
+                self.forceRefreshListView(self.ids.downloadList, statusText)
 
                 return
 
@@ -256,22 +269,26 @@ class MangaDownloader(TabbedPanel):
 
             if chapterInfo is not None:
                 downloadSession['chapterInfotext'] = chapterInfo
+                statusText = chapterInfo
 
             if mangaInfo is not None:
                 downloadSession['mangaInfotext'] = mangaInfo
+                statusText = mangaInfo
 
             if sessionProgress is not None:
+                # print "Weeeeeee "+ str(sessionProgress)
                 downloadSession['mangaProgress'] = sessionProgress
-
             #If it is not completed, then only accept any status change of complete
             if not downloadSession['downloadCompleted']:
                 downloadSession['downloadCompleted'] = downloadCompleted
 
-            self.forceRefreshListView(self.ids.downloadList)
+            self.forceRefreshListView(self.ids.downloadList, statusText)
 
-    def forceRefreshListView(self, listview):
+    def forceRefreshListView(self, listview, statusText=""):
         listview.adapter.update_for_new_data()
         listview._trigger_reset_populate()
+
+        self.ids.status.text = statusText
 
     def on_chapterselect_checkbox_active(self, checkbox, value):
         chapterInfo = {}

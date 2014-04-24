@@ -139,28 +139,39 @@
                                         text: 'Select All'
                                     Button:
                                         id: unselectAll
-                                        text: 'Unselect All'
+                                        text: 'Clear All'
                                 BoxLayout:
                                     size_hint: 1, 0.2
                                     padding: 2, 0, 2, 0
                                     Button:
                                         id: downloadChapters
                                         text: 'Download Chapters'
-            Label:
-                id: status
+            BoxLayout:
+                size_hint_y: None
+                height: 25
                 canvas.before:
                     Color:
                         rgba: 0, 0, 0, 1
                     Rectangle:
                         pos: self.pos
                         size: self.size
-                size_hint_y: None
-                height: 25
-                text: 'Status:'
-                halign: 'left'
-                valign: 'middle'
-                text_size: self.size
-                padding_x: -10
+                Label:
+                    size_hint: None, None
+                    height: 25
+                    text: 'Status:'
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.size
+                    width: 65
+                    padding_x: -10
+                Label:
+                    id: status
+                    size_hint_y: None
+                    height: 25
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.size
+                    markup: True
 
     TabbedPanelItem:
         text: 'Downloads'
