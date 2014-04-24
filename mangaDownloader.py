@@ -128,6 +128,9 @@ class MangaDownloader(TabbedPanel):
         self.ids.resumeDownloadSession.bind(on_press=self.pauseCancelDownloads)
         self.ids.resumeAllDownloadSession.bind(on_press=self.pauseCancelDownloads)
 
+        self.ids.selectAllDownloadSession.bind(on_press=self.selectUnSelectDownloads)
+        self.ids.clearAllDownloadSession.bind(on_press=self.selectUnSelectDownloads)
+
         self.init = True
         self.mangaBackGroundDownloader.getMangaList(self.currentMangaSite, self.updateMangaList)
 
@@ -249,7 +252,6 @@ class MangaDownloader(TabbedPanel):
 
     def downloadingProgress(self, downloadSessionId, chapterProgress=None, chapterInfo=None, sessionProgress=None, mangaInfo=None, sessionFail=False, downloadCompleted=False):
         with self.downloadUILock:
-
             statusText = ""
 
             downloadSession = self.downloadingMangasIds[downloadSessionId]
@@ -309,19 +311,28 @@ class MangaDownloader(TabbedPanel):
         else:
             self.downloadingMangasSelected.remove(downloadSessionId)
 
-        downloadSession['checked'] = value
+        with self.downloadUILock:
+            downloadSession['checked'] = value
 
         print self.downloadingMangasSelected
 
     def pauseDownloads(self, downloadSessionIdsList):
         for downloadSessionId in downloadSessionIdsList:
             self.mangaBackGroundDownloader.pauseDownloadChapters(downloadSessionId)
+            with self.downloadUILock:
+                downloadSession = self.downloadingMangasIds[downloadSessionId]
+                downloadSession['text'] = downloadSession['mangaSite'] + " (Paused)"
 
-        print "Done pausing provided sessions"
+        self.forceRefreshListView(self.ids.downloadList)
 
     def resumeDownloads(self, downloadSessionIdsList):
         for downloadSessionId in downloadSessionIdsList:
             self.mangaBackGroundDownloader.resumeDownloadChapters(downloadSessionId)
+            with self.downloadUILock:
+                downloadSession = self.downloadingMangasIds[downloadSessionId]
+                downloadSession['text'] = downloadSession['mangaSite']
+
+        self.forceRefreshListView(self.ids.downloadList)
 
     # TODO - Remove downloads - Needs some thought on that, so will do later
 
@@ -359,6 +370,23 @@ class MangaDownloader(TabbedPanel):
         print "Yes we resume all"
         downloadSessionIdsList = self.downloadingMangasIds.keys()
         self.resumeDownloads(downloadSessionIdsList)
+
+    def selectUnSelectDownloads(self, instance):
+        if instance == self.ids.clearAllDownloadSession:
+            for downloadSession in self.downloadingMangasIds.values():
+                with self.downloadUILock:
+                    downloadSession['checked'] = False
+            del self.downloadingMangasSelected[:]
+        elif instance == self.ids.selectAllDownloadSession:
+            self.downloadingMangasSelected = list(self.downloadingMangasIds.keys())
+            for downloadSessionId in self.downloadingMangasSelected:
+                with self.downloadUILock:
+                    downloadSession = self.downloadingMangasIds[downloadSessionId]
+                    downloadSession['checked'] = True
+
+
+        self.forceRefreshListView(self.ids.downloadList)
+
 
 class MangaDownloaderApp(App):
     def build(self):

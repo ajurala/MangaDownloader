@@ -210,6 +210,21 @@
             ListView:
                 id: downloadList
                 adapter: root.downloadlist_adapter
+            BoxLayout:
+                size_hint: 0.7, None
+                spacing: 10
+                pos_hint: {'center_x': .5}
+                #padding: 0, 0, 0, 15
+                DownTabButton:
+                    id: selectAllDownloadSession
+                    pos_hint: {'center_y': .5}
+                    size_hint: 1, 0.5
+                    text: 'Select All'
+                DownTabButton:
+                    id: clearAllDownloadSession
+                    pos_hint: {'center_y': .5}
+                    size_hint: 1, 0.5
+                    text: 'Clear All'
 
     TabbedPanelItem:
         id: optionTab

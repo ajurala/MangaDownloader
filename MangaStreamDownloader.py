@@ -425,7 +425,7 @@ class MangaStreamDownloader(MangaConfig):
                         downloadChapterSessionInfo['chapterSessionDownloader'] = sessionDownloader
                         downloadSession['downloadChapterSessionsInfo'][currentChapter] = downloadChapterSessionInfo
 
-                        sessionDownloader.startResumeDownloadSession()
+                        sessionDownloader.startDownloadSession()
                     else:
                         downloadSessionComplete = downloadSession['downloadSessionComplete']
                         downloadSession['downloadComplete'] = True
