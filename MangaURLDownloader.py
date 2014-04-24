@@ -53,6 +53,7 @@ class MangaURLDownloader(threading.Thread):
         progressCallback = self.progressCallback
         url = self.url
         file = self.file
+
         try:
             user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
             req = urllib2.Request(self.url, headers={'User-Agent': user_agent})
@@ -85,10 +86,14 @@ class MangaURLDownloader(threading.Thread):
             fileNotDownloaded = True
             #Open file if url response to be saved in file
             if folder is not None:
-                if file is not None:
-                    urlSplitList = urlparse.urlsplit(url)
-                    urlPath = urlSplitList[2]
-                    file = urlPath.split('/')[-1]
+                urlSplitList = urlparse.urlsplit(url)
+                urlPath = urlSplitList[2]
+                imageFile = urlPath.split('/')[-1]
+                if file is None:
+                    file = imageFile
+                else:
+                    imageName, imageExtension = os.path.splitext(imageFile)
+                    file += imageExtension
 
                 file = os.path.join(folder, file)
 

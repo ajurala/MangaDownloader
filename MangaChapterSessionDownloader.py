@@ -7,7 +7,18 @@ class MangaChapterSessionDownloader():
     def __init__(self, urls, downloadSessionId, progressInfo, downloadSessionComplete, failedDownload, folder):
         # Save these info
 
-        self.toDownloadUrls = urls
+        # Assuming the urls are given in the correct order
+        urlsInfo = []
+        imageNumber = 1
+        for url in urls:
+            urlInfo = {}
+            urlInfo['url'] = url
+            urlInfo['imageName'] = '%03d' % imageNumber
+
+            urlsInfo.append(urlInfo)
+            imageNumber += 1
+
+        self.toDownloadUrls = urlsInfo
         self.progressInfo = progressInfo
         self.downloadSessionComplete = downloadSessionComplete
         self.failedDownload = failedDownload
@@ -42,18 +53,20 @@ class MangaChapterSessionDownloader():
                 parallelUrlDownloads = self.parallelUrlDownloads if self.parallelUrlDownloads < toDownloadUrlsCount else toDownloadUrlsCount
 
                 for i in range(parallelUrlDownloads):
-                    url = self.toDownloadUrls.pop(0)
+                    urlInfo = self.toDownloadUrls.pop(0)
+                    url = urlInfo['url']
+                    imageName = urlInfo['imageName']
 
-                    response = MangaURLDownloader.downloadUrl(url, self.urlDownloadComplete, self.folder, failDownload=self.failedDownload)
-                    self.downloadingUrls[response] = url
+                    response = MangaURLDownloader.downloadUrl(url, self.urlDownloadComplete, self.folder, failDownload=self.failedDownload, file=imageName)
+                    self.downloadingUrls[response] = urlInfo
                     self.parallelUrlDownloads -= 1
 
     def urlDownloadComplete(self, response, result):
         # Send a proper progress/complete info to the requester
         with self.lock:
-            url = self.downloadingUrls.get(response, None)
-            print "Downloading of url " + url + " complete"
-            if url is not None:
+            urlInfo = self.downloadingUrls.get(response, None)
+            print "Downloading of url " + urlInfo['url'] + " complete"
+            if urlInfo is not None:
                 self.downloadingUrls.pop(response)
 
             self.parallelUrlDownloads += 1
@@ -65,10 +78,12 @@ class MangaChapterSessionDownloader():
             percent = int((float(downloadCompletedCount)/float(self.urlCount))*100.0)
 
             if toDownloadCount > 0 and self.failureCount > 0:
-                url = self.toDownloadUrls.pop(0)
+                urlInfo = self.toDownloadUrls.pop(0)
+                url = urlInfo['url']
+                imageName = urlInfo['imageName']
 
-                response = MangaURLDownloader.downloadUrl(url, self.urlDownloadComplete, self.folder)
-                self.downloadingUrls[response] = url
+                response = MangaURLDownloader.downloadUrl(url, self.urlDownloadComplete, self.folder, failDownload=self.failedDownload, file=imageName)
+                self.downloadingUrls[response] = urlInfo
                 self.parallelUrlDownloads -= 1
 
             downloadSessionComplete = self.downloadSessionComplete
@@ -99,10 +114,10 @@ class MangaChapterSessionDownloader():
         with self.lock:
             self.failureCount -= 1
 
-            url = self.downloadingUrls.get(response, None)
-            self.toDownloadUrls.append(url)
+            urlInfo = self.downloadingUrls.get(response, None)
+            self.toDownloadUrls.append(urlInfo)
 
-            if url is not None:
+            if urlInfo is not None:
                 self.downloadingUrls.pop(response)
 
     def pauseDownloadSession(self):

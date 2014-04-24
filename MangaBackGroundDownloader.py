@@ -149,7 +149,7 @@ class MangaBackGroundDownloader():
         downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
         if downloadRequest is not None:
             func = downloadRequest['func']
-            downloadRequest['currentChapterNumber'] += 1
+            downloadRequest['totalDownloadedChapters'] += 1
             mangaInfo = downloadRequest['manga'] + " " + str(downloadRequest['totalDownloadedChapters']) + "/" + str(downloadRequest['totalChapters'])
             func(downloadSessionId, mangaInfo=mangaInfo, chapterInfo=currentChapterName)
 
