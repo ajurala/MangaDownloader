@@ -25,8 +25,8 @@ Limitations:
 
 1. Currently downloads mangas under a folder named from manga site itself - Plan to change this to user defined
 
-2. Buttons in Download section does nothing
+2. Remove and Remove All in Download section does nothing
 
-3. Small buttons in the chapter list does nothing
+3. Download new and Select new buttons in the chapter list does nothing
 
 4. Only MangaStream is supported
