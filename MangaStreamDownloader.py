@@ -168,8 +168,8 @@ class MangaStreamDownloader(MangaConfig):
 
         return temp_urls
 
-    def startDownloadChapters(self, downloadSessionId
-        chapterProgressInfo = None
+    def startDownloadChapters(self, downloadSessionId):
+        chapterProgress = None
         currentChapterName = ""
 
         with self.sessionLock:
@@ -194,14 +194,14 @@ class MangaStreamDownloader(MangaConfig):
 
                 self.downloadChapterPageInfo[req] = downloadSessionId
 
-                chapterProgressInfo = downloadSession['chapterProgressInfo']
+                chapterProgress = downloadSession['chapterProgressInfo']
                 currentChapterName = downloadSession['chapterNames'][currentChapter]
 
-        if chapterProgressInfo is not None:
+        if chapterProgress is not None:
             chapterInfo = "Parsing " + currentChapterName
 
             # Update UI in a thread
-            t = Thread(target=self.updateStartParse, args=(chapterProgressInfo, downloadSessionId, chapterInfo))
+            t = Thread(target=self.updateStartParse, args=(chapterProgress, downloadSessionId, chapterInfo))
             t.start()
 
     def updateStartParse(self, progressInfo, downloadSessionId, chapterInfo):
@@ -215,7 +215,7 @@ class MangaStreamDownloader(MangaConfig):
         self.chapterDownloadSessionFailed(downloadSessionId)
 
     def parsedChapterPage(self, req, result):
-        chapterProgressInfo = None
+        chapterProgress = None
         currentChapterName = ""
         semaphore = None
         with self.sessionLock:
@@ -295,7 +295,7 @@ class MangaStreamDownloader(MangaConfig):
 
                         self.downloadChapterPageInfo[newreq] = downloadSessionId
 
-                        chapterProgressInfo = downloadSession['chapterProgressInfo']
+                        chapterProgress = downloadSession['chapterProgressInfo']
                         currentChapterName = downloadSession['chapterNames'][currentChapter]
                     else:
                         # Start the session
@@ -329,9 +329,9 @@ class MangaStreamDownloader(MangaConfig):
             self.downloadChapterPageInfo.pop(req)
 
 
-        if chapterProgressInfo is not None:
+        if chapterProgress is not None:
             chapterInfo = "Parsing " + currentChapterName
-            chapterProgressInfo(downloadSessionId, currentChapterName=chapterInfo)
+            chapterProgress(downloadSessionId, currentChapterName=chapterInfo)
 
     def chapterProgressInfo(self, downloadSessionId, downloadedCount, percent):
         chapterProgressInfo = None
