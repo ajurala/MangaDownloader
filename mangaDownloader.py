@@ -17,6 +17,7 @@ import string
 import random
 import mangaViewDefines
 import MangaBackGroundDownloader
+import datetime
 
 
 mangaDownloaderInstance = None
@@ -69,7 +70,8 @@ class MangaDownloader(TabbedPanel):
         'shorten': 'true',
         'valign': 'middle',
         'halign': 'left',
-        'url': rec['url']
+        'url': rec['url'],
+        'previousDate': rec['previousDate']
     }
 
     list_adapter = ListAdapter(data=[],
@@ -83,7 +85,9 @@ class MangaDownloader(TabbedPanel):
         'text': rec['name'],
         'on_active': on_chapterselect_checkbox_active,
         'url': rec['url'],
-        'active': rec['checked']
+        'active': rec['checked'],
+        'color': rec['color'],
+        'date': rec['date']
     }
 
     chapterlist_adapter = ListAdapter(data=[],
@@ -133,6 +137,8 @@ class MangaDownloader(TabbedPanel):
         self.ids.clearAllDownloadSession.bind(on_press=self.selectUnSelectList)
         self.ids.selectAllChapters.bind(on_press=self.selectUnSelectList)
         self.ids.clearAllChapters.bind(on_press=self.selectUnSelectList)
+        self.ids.selectNew.bind(on_press=self.selectUnSelectList)
+        self.ids.downloadNew.bind(on_press=self.downloadNew)
 
         self.init = True
         self.mangaBackGroundDownloader.getMangaList(self.currentMangaSite, self.updateMangaList)
@@ -203,11 +209,24 @@ class MangaDownloader(TabbedPanel):
                 #print "Starting to download now ..."
                 self.ids.status.text = "Getting " + self.selectedManga + "'s chapters"
 
-                self.mangaBackGroundDownloader.downloadChapterList(self.currentMangaSite, selected_object.url, self.updateChapterList)
+                #Get the updated Date from the saved list
+                #OPTIMIZE THIS - Think in DICT terms
+
+                previousDate = selected_object.previousDate
+                for manga in list_adapter.data:
+                    if manga['name'] == selectedManga:
+                        previousDate = manga['previousDate']
+
+                self.mangaBackGroundDownloader.downloadChapterList(self.currentMangaSite, selected_object.url, self.updateChapterList, previousDate)
 
     def updateChapterList(self, mangaSite, chapterList):
         for chapter in chapterList:
             chapter['checked'] = False
+            newChapter = chapter.get('new', False)
+            if newChapter:
+                chapter['color'] = (0, 1, 0, 1)
+            else:
+                chapter['color'] = (0, 0, 0, 1)
 
         data = chapterList
         self.chapterlist_adapter.data = data
@@ -228,7 +247,8 @@ class MangaDownloader(TabbedPanel):
                                                                                   self.toDownloadManga,
                                                                                   self.toDownloadUrls,
                                                                                   downloadSessionId,
-                                                                                  self.downloadingProgress)
+                                                                                  self.downloadingProgress,
+                                                                                  self.updateMangaDates)
 
             if len(urls) > 0:
                 #Update downloading data with this instance. Pass the unique id for it
@@ -255,6 +275,11 @@ class MangaDownloader(TabbedPanel):
                 self.forceRefreshListView(self.ids.downloadList)
 
                 self.mangaBackGroundDownloader.startDownloadChapters(downloadSessionId)
+
+    def updateMangaDates(self, mangaSite, index, date):
+        if self.currentMangaSite == mangaSite:
+            self.list_adapter.data[index]['previousDate'] = date
+            self.forceRefreshListView(self.ids.mangaList)
 
     def downloadingProgress(self, downloadSessionId, chapterProgress=None, chapterInfo=None, sessionProgress=None, mangaInfo=None, sessionFail=False, downloadCompleted=False):
         with self.downloadUILock:
@@ -302,6 +327,7 @@ class MangaDownloader(TabbedPanel):
         chapterInfo = {}
         chapterInfo['chapterName'] = checkbox.text
         chapterInfo['url'] = checkbox.url
+        chapterInfo['date'] = checkbox.date
 
         if value:
             self.toDownloadUrls.append(chapterInfo)
@@ -410,6 +436,35 @@ class MangaDownloader(TabbedPanel):
             del self.toDownloadUrls[:]
 
             self.forceRefreshListView(self.ids.chapterList)
+
+        elif instance == self.ids.selectNew:
+            for chapter in self.chapterlist_adapter.data:
+                if chapter['new']:
+                    chapter['checked'] = True
+
+                    chapterInfo = {}
+                    chapterInfo['chapterName'] = chapter['name']
+                    chapterInfo['url'] = chapter['url']
+                    chapterInfo['date'] = chapter['date']
+
+                    self.toDownloadUrls.append(chapterInfo)
+            self.forceRefreshListView(self.ids.chapterList)
+
+    def downloadNew(self, instance):
+        if instance == self.ids.downloadNew:
+            # Save the current downloadUrls, Clear the download urls, then download the new urls, save back the previous urls
+            tmpUrls = list(self.toDownloadUrls)
+            del self.toDownloadUrls[:]
+            for chapter in self.chapterlist_adapter.data:
+                if chapter['new']:
+                    chapterInfo = {}
+                    chapterInfo['chapterName'] = chapter['name']
+                    chapterInfo['url'] = chapter['url']
+                    chapterInfo['date'] = chapter['date']
+
+                    self.toDownloadUrls.append(chapterInfo)
+            self.downloadChapters(self.ids.downloadChapters)
+            self.toDownloadUrls = list(self.toDownloadUrls)
 
 
 class MangaDownloaderApp(App):

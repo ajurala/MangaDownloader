@@ -53,7 +53,7 @@ class MangaBackGroundDownloader():
             self.mangaSiteRequestInfo.pop(mangaSite)
             callbackFunc(mangaSite, mangaList)
 
-    def downloadChapterList(self, mangaSite, url, func):
+    def downloadChapterList(self, mangaSite, url, func, previousDate):
         mangaObj = self.mangaSites.get(mangaSite, None)
 
         if mangaObj is not None:
@@ -61,7 +61,7 @@ class MangaBackGroundDownloader():
             # This call below might be needed in future - Keep it
             #mangaObj.stopPendingChapterRequests()
 
-            mangaObj.downloadChapterList(url, self.chapterListCallBack)
+            mangaObj.downloadChapterList(url, self.chapterListCallBack, previousDate)
 
             self.chapterRequestInfo[mangaSite] = func
 
@@ -72,7 +72,7 @@ class MangaBackGroundDownloader():
             self.chapterRequestInfo.pop(mangaSite)
             callbackFunc(mangaSite, mangaList)
 
-    def loadDownloadChapters(self, mangaSite, manga, urlsInfo, downloadSessionId, func):
+    def loadDownloadChapters(self, mangaSite, manga, urlsInfo, downloadSessionId, func, updateMangaDates):
         mangaObj = self.mangaSites.get(mangaSite, None)
 
         if mangaObj is not None:
@@ -83,6 +83,7 @@ class MangaBackGroundDownloader():
             downloadRequest = {}
             downloadRequest['mangaObj'] = mangaObj
             downloadRequest['func'] = func
+            downloadRequest['updateMangaDates'] = updateMangaDates
             downloadRequest['mangaSite'] = mangaSite
             downloadRequest['manga'] = manga
             downloadRequest['sessionPercent'] = 0
@@ -90,7 +91,7 @@ class MangaBackGroundDownloader():
             downloadRequest['totalDownloadedChapters'] = 0
 
             #The manga site will return the urls
-            urls = mangaObj.loadDownloadChapters(urlsInfo, downloadSessionId,
+            urls = mangaObj.loadDownloadChapters(manga, urlsInfo, downloadSessionId,
                                                     self.progressInfo, self.downloadSessionComplete, self.downloadSessionFailed,
                                                     self.chapterProgressInfo, self.chapterDownloadSessionComplete,
                                                     folder)
@@ -144,14 +145,16 @@ class MangaBackGroundDownloader():
             func = downloadRequest['func']
             func(downloadSessionId, chapterInfo=currentChapterName, chapterProgress=percent)
 
-    def chapterDownloadSessionComplete(self, downloadSessionId, currentChapterName, folder):
+    def chapterDownloadSessionComplete(self, downloadSessionId, currentChapterName, folder, index, date):
 
         downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
         if downloadRequest is not None:
             func = downloadRequest['func']
+            updateDates = downloadRequest['updateMangaDates']
             downloadRequest['totalDownloadedChapters'] += 1
             mangaInfo = downloadRequest['manga'] + " " + str(downloadRequest['totalDownloadedChapters']) + "/" + str(downloadRequest['totalChapters'])
             func(downloadSessionId, mangaInfo=mangaInfo, chapterInfo=currentChapterName)
+            updateDates(downloadRequest['mangaSite'], index, date)
 
         if self.config.get('manga', 'download_as') == "CBZ":
             # Zip the folder and create the cbz

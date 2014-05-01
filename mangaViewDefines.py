@@ -10,6 +10,7 @@ Builder.load_string("""
     text: ctx.text
     text_size: self.size
     url: ctx.url
+    previousDate: ctx.previousDate
 
 #
 # [MangaButton@SelectableView+GridLayout]:
@@ -58,11 +59,13 @@ Builder.load_string("""
         url: ctx.url
         text: ctx.text
         active: ctx.active
+        date: ctx.date
 
     MangaDownloaderLabel:
         id: chapterText
         text: ctx.text
         padding_x: 30
+        color: ctx.color
 
 [MangaDownload@BoxLayout]
     orientation: 'vertical'

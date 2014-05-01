@@ -6,6 +6,7 @@ from StringIO import StringIO
 
 import MangaUtils
 import MangaURLDownloader
+import datetime
 import os
 
 from MangaChapterSessionDownloader import MangaChapterSessionDownloader
@@ -53,6 +54,20 @@ class MangaStreamDownloader(MangaConfig):
     def isRequestPending(self):
         return self.requestPending
 
+    def getDate(self, dateText):
+        dteComma = dateText.find(',')
+        if dteComma == -1:
+            days = int(dateText[0:dateText.find(' ')])
+            dte = datetime.date.today() - datetime.timedelta(days=days)
+        else:
+            month = dateText[0:3]
+            day = dateText[4: dteComma - 2]
+            day = day if len(day) == 2 else "0"+day
+            year = dateText[-4:]
+            dte = datetime.datetime.strptime(year+month+day, "%Y%b%d").date()
+
+        return dte
+
     def downloadMangaList(self, callbackFunc):
         if not self.requestPending:
             with self.mangaLock:
@@ -80,6 +95,7 @@ class MangaStreamDownloader(MangaConfig):
                     mangaInfo = {}
                     mangaInfo['name'] = manga
                     mangaInfo['url'] = mangaDict[manga]
+                    mangaInfo['previousDate'] = datetime.date.min
                     mangaList.append(mangaInfo)
 
                 self.mangaList = mangaList
@@ -95,10 +111,11 @@ class MangaStreamDownloader(MangaConfig):
         # This function might be needed later
         pass
 
-    def downloadChapterList(self, url, callbackFunc):
+    def downloadChapterList(self, url, callbackFunc, previousDate=datetime.date.min):
         with self.chapterLock:
             self.chapterCallbackFunc = callbackFunc
             self.currentChapterListReq = MangaURLDownloader.downloadUrl(url, self.downloadChapterListSuccess)
+            self.previousDate = previousDate
 
     def downloadChapterListSuccess(self, req, result):
 
@@ -112,13 +129,23 @@ class MangaStreamDownloader(MangaConfig):
                 chapterListDict = {}
                 for node in nodeList:
                     if node.text is not None:
-                        chapterListDict[node.text] = node.get('href')
+                        chapterInfo = []
+                        chapterInfo.append(node.get('href'))
+                        dateText = node.getparent().getnext().text
+                        chapterInfo.append(self.getDate(dateText))
+                        print chapterInfo[1]
+                        chapterListDict[node.text] = chapterInfo
 
                 chapterList = []
                 for chapter in sorted(chapterListDict.keys()):
                     chapterInfo = {}
                     chapterInfo['name'] = chapter
-                    chapterInfo['url'] = chapterListDict[chapter]
+                    chapterInfo['url'] = chapterListDict[chapter][0]
+                    chapterInfo['date'] = chapterListDict[chapter][1]
+                    if chapterInfo['date'] > self.previousDate:
+                        chapterInfo['new'] = True
+                    else:
+                        chapterInfo['new'] = False
                     chapterList.append(chapterInfo)
 
                 self.chapterCallbackFunc(self.mangaSiteName, chapterList)
@@ -128,25 +155,29 @@ class MangaStreamDownloader(MangaConfig):
     def getMangaList(self):
         return self.mangaList
 
-    def loadDownloadChapters(self, urlsInfo, downloadSessionId, progressInfo, downloadSessionComplete, downloadSessionFailed,
+    def loadDownloadChapters(self, mangaName, urlsInfo, downloadSessionId, progressInfo, downloadSessionComplete, downloadSessionFailed,
                                 chapterProgressInfo, chapterDownloadSessionComplete, folder):
         # Check the urls that is already being downloaded and start a new session for remaining ones
         temp_urls = []
         temp_chapter_names = []
+        temp_chapter_dates = []
 
         with self.sessionLock:
             for urlInfo in urlsInfo:
                 url = urlInfo['url']
                 chapterName = urlInfo['chapterName']
+                chapterDate = urlInfo['date']
                 exists = self.downloadURLs.get(url, None)
                 if exists is None:
                     temp_urls.append(url)
                     temp_chapter_names.append(chapterName)
+                    temp_chapter_dates.append(chapterDate)
                     self.downloadURLs[url] = downloadSessionId
 
             print "Number of chapters in this session " + str(len(temp_urls))
             if len(temp_urls) > 0:
                 downloadSession = {}
+                downloadSession['mangaName'] = mangaName
                 downloadSession['downloadInProgress'] = False
                 downloadSession['downloadPaused'] = False
                 downloadSession['downloadComplete'] = False
@@ -157,6 +188,7 @@ class MangaStreamDownloader(MangaConfig):
                 downloadSession['downloadSessionFailed'] = downloadSessionFailed
                 downloadSession['chapterURLs'] = temp_urls
                 downloadSession['chapterNames'] = temp_chapter_names
+                downloadSession['chapterDates'] = temp_chapter_dates
                 downloadSession['currentChapter'] = 0
                 downloadSession['folder'] = folder
                 downloadSession['downloadChapterSessionsInfo'] = []
@@ -376,15 +408,29 @@ class MangaStreamDownloader(MangaConfig):
                     downloadChapterSessionInfo = downloadSession['downloadChapterSessionsInfo'][currentChapter]
                     currentChapterFolder = downloadChapterSessionInfo['folder']
                     currentChapterName = downloadSession['chapterNames'][currentChapter]
+                    currentChapterDate = downloadSession['chapterDates'][currentChapter]
+
+                    mangaPreviousDate = None
+                    mangaIndex = None
+
+                    # Get the current previous date and compare the same and save if current is latest
+                    mangaName = downloadSession['mangaName']
+
+                    # OPTIMIZE THIS - Think in DICT terms
+                    i = 0
+                    while i < len(self.mangaList):
+                        manga = self.mangaList[i]
+                        if manga['name'] == mangaName:
+                            if manga['previousDate'] <=  currentChapterDate:
+                                manga['previousDate'] = currentChapterDate
+                                mangaPreviousDate = currentChapterDate
+                                mangaIndex = i
+                                self.dumpManga()
+                            break
+                        i += 1
 
                     totalDownloadedImages = downloadSession['totalDownloadedImages'] + len(downloadChapterSessionInfo['imagesURLs'])
                     totalProgress = (float(totalDownloadedImages) / float(downloadSession['totalImages'])) * 100
-
-                    # print "Progress Information"
-                    # print downloadSession['totalDownloadedImages']
-                    # print len(downloadChapterSessionInfo['imagesURLs'])
-                    # print downloadSession['totalImages']
-                    # print "End of Progress Information"
 
                     chapterURLs = downloadSession['chapterURLs']
 
@@ -395,6 +441,7 @@ class MangaStreamDownloader(MangaConfig):
 
                     downloadSession['chapterURLs'].pop(currentChapter)
                     downloadSession['chapterNames'].pop(currentChapter)
+                    downloadSession['chapterDates'].pop(currentChapter)
                     downloadSession['downloadChapterSessionsInfo'].pop(currentChapter)
                     #currentChapter += 1
 
@@ -448,7 +495,7 @@ class MangaStreamDownloader(MangaConfig):
             progressInfo(downloadSessionId, totalProgress)
 
         if chapterDownloadSessionComplete is not None:
-            chapterDownloadSessionComplete(downloadSessionId, currentChapterName, currentChapterFolder)
+            chapterDownloadSessionComplete(downloadSessionId, currentChapterName, currentChapterFolder, mangaIndex, mangaPreviousDate)
 
         if downloadSessionComplete is not None:
             downloadSessionComplete(downloadSessionId)
