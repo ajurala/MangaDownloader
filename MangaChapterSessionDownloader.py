@@ -129,3 +129,12 @@ class MangaChapterSessionDownloader():
         with self.lock:
             for response in self.downloadingUrls:
                     MangaURLDownloader.resumeDownload(response)
+
+    def stopDownloadSession(self):
+        with self.lock:
+            for response in self.downloadingUrls:
+                    MangaURLDownloader.stopDownload(response)
+
+            # No more data needed
+            del self.downloadingUrls[:]
+            del self.toDownloadUrls[:]

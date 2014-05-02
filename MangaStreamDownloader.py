@@ -311,8 +311,8 @@ class MangaStreamDownloader(MangaConfig):
 
                             parsingChapterPageNumber = 1
 
-                semaphore = downloadSession['semaphore']
-                self.downloadSessions[downloadSessionId] = downloadSession
+                    semaphore = downloadSession['semaphore']
+                    self.downloadSessions[downloadSessionId] = downloadSession
 
         # If semaphore not acquired then it pauses the thread automatically
         if semaphore:
@@ -549,3 +549,24 @@ class MangaStreamDownloader(MangaConfig):
 
                 if sessionDownloader is not None:
                     sessionDownloader.resumeDownloadSession()
+
+    def stopDownloadChapters(self, downloadSessionId):
+        with self.sessionLock:
+            downloadSession = self.downloadSessions.get(downloadSessionId, None)
+            if downloadSession is not None:
+                # No need for special structure for parsing page, removing the downloadSessionId from the list is sufficient
+                print 'stopDownloadChapters - MangaStream'
+
+                currentChapter = downloadSession['currentChapter']
+                downloadChapterSessionInfo = downloadSession['downloadChapterSessionsInfo'][currentChapter]
+                sessionDownloader = downloadChapterSessionInfo['chapterSessionDownloader']
+
+                if sessionDownloader is not None:
+                    sessionDownloader.stopDownloadSession()
+
+                urls = downloadSession['chapterURLs']
+                for url in urls:
+                    self.downloadURLs.pop(url)
+
+                # Completely stopped, remove it from the list
+                self.downloadSessions.pop(downloadSessionId)

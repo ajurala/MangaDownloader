@@ -196,4 +196,12 @@ class MangaBackGroundDownloader():
             #Start resume to the download now
             mangaObj.resumeDownloadChapters(downloadSessionId)
 
+    def stopDownloadChapters(self, downloadSessionId):
+        downloadRequest = self.downloadRequestInfo.get(downloadSessionId, None)
+
+        if downloadRequest is not None:
+            mangaObj = downloadRequest['mangaObj']
+
+            #Start resume to the download now
+            mangaObj.stopDownloadChapters(downloadSessionId)
 

@@ -290,37 +290,40 @@ class MangaDownloader(TabbedPanel):
         with self.downloadUILock:
             statusText = ""
 
-            downloadSession = self.downloadingMangasIds[downloadSessionId]
-            if sessionFail:
-                chapterInfotext = "[b][color=ff0000]" + escape_markup("Failed to download Chapter ") + \
-                                  "[color=000000]" + escape_markup(chapterInfo) + "[/color]" + \
-                                  escape_markup(" Try again by clicking 'Resume' button") + "[/b][/color]"
+            downloadSession = self.downloadingMangasIds.get(downloadSessionId, None)
+            if downloadSession is not None:
+                if sessionFail:
+                    chapterInfotext = "[b][color=ff0000]" + escape_markup("Failed to download Chapter ") + \
+                                      "[color=000000]" + escape_markup(chapterInfo) + "[/color]" + \
+                                      escape_markup(" Try again by clicking 'Resume' button") + "[/b][/color]"
 
-                downloadSession['chapterInfotext'] = chapterInfotext
-                statusText = chapterInfotext
+                    downloadSession['chapterInfotext'] = chapterInfotext
+                    statusText = chapterInfotext
+                    self.forceRefreshListView(self.ids.downloadList, statusText)
+
+                    return
+
+                if chapterProgress is not None:
+                    downloadSession['chapterProgress'] = chapterProgress
+
+                if chapterInfo is not None:
+                    downloadSession['chapterInfotext'] = chapterInfo
+                    statusText = chapterInfo
+
+                if mangaInfo is not None:
+                    downloadSession['mangaInfotext'] = mangaInfo
+                    statusText = mangaInfo
+
+                if sessionProgress is not None:
+                    # print "Weeeeeee "+ str(sessionProgress)
+                    downloadSession['mangaProgress'] = sessionProgress
+                #If it is not completed, then only accept any status change of complete
+                if not downloadSession['downloadCompleted']:
+                    downloadSession['downloadCompleted'] = downloadCompleted
+
                 self.forceRefreshListView(self.ids.downloadList, statusText)
-
-                return
-
-            if chapterProgress is not None:
-                downloadSession['chapterProgress'] = chapterProgress
-
-            if chapterInfo is not None:
-                downloadSession['chapterInfotext'] = chapterInfo
-                statusText = chapterInfo
-
-            if mangaInfo is not None:
-                downloadSession['mangaInfotext'] = mangaInfo
-                statusText = mangaInfo
-
-            if sessionProgress is not None:
-                # print "Weeeeeee "+ str(sessionProgress)
-                downloadSession['mangaProgress'] = sessionProgress
-            #If it is not completed, then only accept any status change of complete
-            if not downloadSession['downloadCompleted']:
-                downloadSession['downloadCompleted'] = downloadCompleted
-
-            self.forceRefreshListView(self.ids.downloadList, statusText)
+            else:
+                print "Got some extraneous progress info - must have been removed already"
 
     def forceRefreshListView(self, listview, statusText=""):
         listview.adapter.update_for_new_data()
@@ -376,7 +379,14 @@ class MangaDownloader(TabbedPanel):
 
         self.forceRefreshListView(self.ids.downloadList)
 
-    # TODO - Remove downloads - Needs some thought on that, so will do later
+    def removeDownloads(self, downloadSessionIdsList):
+        with self.downloadUILock:
+            for downloadSessionId in downloadSessionIdsList:
+                self.mangaBackGroundDownloader.stopDownloadChapters(downloadSessionId)
+                downloadSession = self.downloadingMangasIds.pop(downloadSessionId)
+                self.downloadlist_adapter.data.remove(downloadSession)
+
+        self.forceRefreshListView(self.ids.downloadList)
 
     def pauseCancelDownloads(self, instance):
         if instance == self.ids.pauseDownloadSession:
@@ -388,6 +398,9 @@ class MangaDownloader(TabbedPanel):
             popup.open()
         elif instance == self.ids.removeDownloadSession:
             print "remove called"
+            popup = MangaPopup('Remove all', 'Are you sure you want to remove all the downloads?')
+            popup.bind(on_ok=self.remove_downloads)
+            popup.open()
         elif instance == self.ids.removeAllDownloadSession:
             popup = MangaPopup('Remove all', 'Are you sure you want to remove all the downloads?')
             popup.bind(on_ok=self.remove_all)
@@ -400,6 +413,9 @@ class MangaDownloader(TabbedPanel):
             popup.bind(on_ok=self.resume_all)
             popup.open()
 
+    def remove_downloads(self, instance):
+        self.removeDownloads(self.downloadingMangasSelected)
+
     def pause_all(self, instance):
         print "Yes we pause all"
         downloadSessionIdsList = self.downloadingMangasIds.keys()
@@ -407,6 +423,8 @@ class MangaDownloader(TabbedPanel):
 
     def remove_all(self, instance):
         print "Yes we remove all"
+        downloadSessionIdsList = self.downloadingMangasIds.keys()
+        self.removeDownloads(downloadSessionIdsList)
 
     def resume_all(self, instance):
         print "Yes we resume all"
