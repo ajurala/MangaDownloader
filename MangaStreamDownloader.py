@@ -421,7 +421,7 @@ class MangaStreamDownloader(MangaConfig):
                     while i < len(self.mangaList):
                         manga = self.mangaList[i]
                         if manga['name'] == mangaName:
-                            if manga['previousDate'] <=  currentChapterDate:
+                            if manga['previousDate'] <  currentChapterDate:
                                 manga['previousDate'] = currentChapterDate
                                 mangaPreviousDate = currentChapterDate
                                 mangaIndex = i
@@ -535,7 +535,6 @@ class MangaStreamDownloader(MangaConfig):
                     sessionDownloader.pauseDownloadSession()
 
     def resumeDownloadChapters(self, downloadSessionId):
-
         with self.sessionLock:
             downloadSession = self.downloadSessions.get(downloadSessionId, None)
             if downloadSession is not None and downloadSession['downloadInProgress'] and downloadSession['downloadPaused'] and not downloadSession['downloadComplete']:

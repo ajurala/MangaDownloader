@@ -222,7 +222,7 @@ def stopDownload(requestId):
         urlThreadInfo = urlThreads.get(requestId, None)
 
     if urlThreadInfo is not None:
-        thread = urlThreads['thread']
+        thread = urlThreadInfo['thread']
         # set the stopDownload to true, and the thread before next chunk read will stop the download
         thread.stopDownload = True
         return True

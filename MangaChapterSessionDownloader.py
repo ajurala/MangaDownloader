@@ -136,5 +136,5 @@ class MangaChapterSessionDownloader():
                     MangaURLDownloader.stopDownload(response)
 
             # No more data needed
-            del self.downloadingUrls[:]
+            self.downloadingUrls.clear()
             del self.toDownloadUrls[:]

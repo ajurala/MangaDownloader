@@ -7,6 +7,13 @@
         "key": "download_folder"
     },
     {
+        "type": "bool",
+        "title": "Download under Manga Site name's Folder",
+        "desc": "Download under <MangaSiteName>/<MangaName>/<Chapters> or <MangaName>/<Chapters>",
+        "section": "manga",
+        "key": "include_mangasite_folder"
+    },
+    {
         "type": "options",
         "title": "Download as",
         "desc": "Download the manga as folder or cbz format",

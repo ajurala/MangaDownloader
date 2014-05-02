@@ -282,7 +282,7 @@ class MangaDownloader(TabbedPanel):
                 self.mangaBackGroundDownloader.startDownloadChapters(downloadSessionId)
 
     def updateMangaDates(self, mangaSite, index, date):
-        if self.currentMangaSite == mangaSite:
+        if self.currentMangaSite == mangaSite and index is not None:
             self.list_adapter.data[index]['previousDate'] = date
             self.forceRefreshListView(self.ids.mangaList)
 
@@ -398,11 +398,12 @@ class MangaDownloader(TabbedPanel):
             popup.open()
         elif instance == self.ids.removeDownloadSession:
             print "remove called"
-            popup = MangaPopup('Remove all', 'Are you sure you want to remove all the downloads?')
-            popup.bind(on_ok=self.remove_downloads)
-            popup.open()
+            if len(self.downloadingMangasSelected) > 0:
+                popup = MangaPopup('Remove all', 'Are you sure you want to remove selected downloads?\nCannot undo this operation')
+                popup.bind(on_ok=self.remove_downloads)
+                popup.open()
         elif instance == self.ids.removeAllDownloadSession:
-            popup = MangaPopup('Remove all', 'Are you sure you want to remove all the downloads?')
+            popup = MangaPopup('Remove all', 'Are you sure you want to remove all the downloads?\nCannot undo this operation')
             popup.bind(on_ok=self.remove_all)
             popup.open()
         elif instance == self.ids.resumeDownloadSession:
@@ -514,7 +515,8 @@ class MangaDownloaderApp(App):
         config.setdefaults('manga', {
             'download_folder': os.getcwd(),
             'download_as': "CBZ",
-            'delete_folder': False
+            'delete_folder': "0",
+            'include_mangasite_folder': "1"
         })
 
     def on_start(self):

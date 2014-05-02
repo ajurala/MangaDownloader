@@ -76,8 +76,10 @@ class MangaBackGroundDownloader():
         mangaObj = self.mangaSites.get(mangaSite, None)
 
         if mangaObj is not None:
-
-            folder = os.path.join(self.downloadPath, mangaSite, MangaUtils.removeInvalidCharacters(manga))
+            if self.config.get('manga', 'include_mangasite_folder') == "1":
+                folder = os.path.join(self.downloadPath, mangaSite, MangaUtils.removeInvalidCharacters(manga))
+            else:
+                folder = os.path.join(self.downloadPath, MangaUtils.removeInvalidCharacters(manga))
 
             #Call download for these urls
             downloadRequest = {}
