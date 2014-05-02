@@ -29,6 +29,13 @@ Builder.load_string("""
 #         size: self.parent.width, self.texture_size[1]
 #         max_lines: 3
 
+<MangaDownloaderButton@Button>:
+    size_hint: 1, 1
+    text_size: self.size
+    halign: 'left'
+    valign: 'middle'
+    padding_x: -10
+    background_color: 1, 1, 1, 0
 
 <MangaDownloaderLabel@Label>:
     size_hint: 1, 1
@@ -40,6 +47,7 @@ Builder.load_string("""
 <MangaDownloaderCheckBox@CheckBox>
     size_hint: None, None
     height: 40
+    width: 32
     canvas:
         Clear:
         Color:
@@ -60,12 +68,16 @@ Builder.load_string("""
         text: ctx.text
         active: ctx.active
         date: ctx.date
+        index: ctx.index
 
-    MangaDownloaderLabel:
+    MangaDownloaderButton:
         id: chapterText
         text: ctx.text
-        padding_x: 30
+        #padding_x: 30
         color: ctx.color
+        checkboxid: chapterSelect
+        index: ctx.index
+        on_press: ctx['on_press'](*args)
 
 [MangaDownload@BoxLayout]
     orientation: 'vertical'
@@ -100,7 +112,7 @@ Builder.load_string("""
                 id: mangaName
                 size_hint_y: 5
                 text: ctx.text
-                padding_x: 30
+                #padding_x: 30
 
         MangaDownloaderLabel:
             id: mangaDownloadInfo

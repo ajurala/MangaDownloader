@@ -84,10 +84,12 @@ class MangaDownloader(TabbedPanel):
     cargs_converter = lambda row_index, rec: {
         'text': rec['name'],
         'on_active': on_chapterselect_checkbox_active,
+        'on_press': on_chapterselect_button_click,
         'url': rec['url'],
         'active': rec['checked'],
         'color': rec['color'],
-        'date': rec['date']
+        'date': rec['date'],
+        'index': rec['index']
     }
 
     chapterlist_adapter = ListAdapter(data=[],
@@ -220,13 +222,16 @@ class MangaDownloader(TabbedPanel):
                 self.mangaBackGroundDownloader.downloadChapterList(self.currentMangaSite, selected_object.url, self.updateChapterList, previousDate)
 
     def updateChapterList(self, mangaSite, chapterList):
+        i = 0
         for chapter in chapterList:
             chapter['checked'] = False
+            chapter['index'] = i
             newChapter = chapter.get('new', False)
             if newChapter:
                 chapter['color'] = (0, 1, 0, 1)
             else:
                 chapter['color'] = (0, 0, 0, 1)
+            i += 1
 
         data = chapterList
         self.chapterlist_adapter.data = data
@@ -333,6 +338,11 @@ class MangaDownloader(TabbedPanel):
             self.toDownloadUrls.append(chapterInfo)
         else:
             self.toDownloadUrls.remove(chapterInfo)
+
+    def on_chapterselect_button_click(self, label):
+        checkbox =  label.checkboxid
+        checkbox.active = not checkbox.active
+        self.on_chapterselect_checkbox_active(checkbox, checkbox.active)
 
     def on_down_checkbox_active(self, checkbox, value):
         downloadSessionId = checkbox.downloadSessionId
@@ -499,6 +509,8 @@ class MangaDownloaderApp(App):
 def on_chapterselect_checkbox_active(checkbox, value):
     mangaDownloaderInstance.on_chapterselect_checkbox_active(checkbox, value)
 
+def on_chapterselect_button_click(button):
+    mangaDownloaderInstance.on_chapterselect_button_click(button)
 
 def on_down_checkbox_active(checkbox, value):
     mangaDownloaderInstance.on_down_checkbox_active(checkbox, value)
