@@ -57,7 +57,12 @@ class MangaStreamDownloader(MangaConfig):
     def getDate(self, dateText):
         dteComma = dateText.find(',')
         if dteComma == -1:
-            days = int(dateText[0:dateText.find(' ')])
+            dateText = dateText[0:dateText.find(' ')]
+            if dateText == "Toda":
+                days = 0
+            else:
+                days = int(dateText)
+
             dte = datetime.date.today() - datetime.timedelta(days=days)
         else:
             month = dateText[0:3]
